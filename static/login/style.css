@@ -1,0 +1,312 @@
+:root {
+    --primary-color: #0f172a;
+    --accent-color: #3b82f6;
+    /* Bright Blue */
+    --accent-hover: #2563eb;
+    --text-white: #ffffff;
+    --text-muted: #94a3b8;
+    --glass-bg: rgba(15, 23, 42, 0.6);
+    /* Darker base */
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(255, 255, 255, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+}
+
+/* Background Image with Overlay */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('/static/img/bg.png') no-repeat center center/cover;
+    z-index: -2;
+}
+
+/* Dark Overlay to ensure text readability and "darker" theme */
+.background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    /* 40% darkness overlay */
+    z-index: -1;
+    backdrop-filter: blur(5px);
+    /* Slight blur on background for depth */
+}
+
+.login-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Glass Card */
+.glass-card {
+    width: 400px;
+    padding: 40px;
+    background: rgba(30, 41, 59, 0.4);
+    /* Dark translucent blue-ish grey */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle glow effect inside card */
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.logo-section h2 {
+    color: var(--text-white);
+    font-weight: 600;
+    text-align: center;
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.form-section h3 {
+    color: var(--text-white);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.input-group label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-white);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.input-group input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.form-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 24px;
+}
+
+.forgot-pass {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-pass:hover {
+    color: var(--text-white);
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: #0f3d6e;
+    /* Deep blue button as per reference image dark theme */
+    background: linear-gradient(135deg, #1e40af, #172554);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(30, 64, 175, 0.4);
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+}
+
+.divider span {
+    background: transparent;
+    /* No, needs to match card bg actually, but difficult with gradient. Let's use text color */
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+    padding: 0 10px;
+}
+
+/* Lines for divider */
+.divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: var(--glass-border);
+    z-index: 0;
+}
+
+
+.social-login {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.social-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.social-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Specific colors if desired, but sticking to white/glass helps clean look */
+.social-btn.google:hover {
+    color: #DB4437;
+}
+
+.social-btn.github:hover {
+    color: #ffffff;
+}
+
+.social-btn.facebook:hover {
+    color: #4267B2;
+}
+
+.register-link {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.register-link a {
+    color: var(--text-white);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #ef4444;
+    /* Red 500 */
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 10px;
+    min-height: 20px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsiveness */
+@media (max-width: 480px) {
+    .glass-card {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        border: none;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 30px;
+    }
+}

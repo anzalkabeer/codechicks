@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floating Stopwatch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #e0e0e0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Background Image with Overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/static/img/bg.png') no-repeat center center/cover;
+            z-index: -2;
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+            backdrop-filter: blur(5px);
+        }
+
+        #clock-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            /* Glassmorphism for Dark Theme */
+            background: rgba(30, 30, 30, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4cqmin;
+            /* Responsive padding */
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            cursor: move;
+            z-index: 1000;
+            user-select: none;
+            transition: transform 0.1s;
+            transform: translate(0, 0);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            /* Resizing Logic */
+            resize: both;
+            overflow: hidden;
+            min-width: 250px;
+            min-height: 150px;
+            width: 300px;
+            /* Default width */
+            height: 180px;
+            /* Default height */
+            container-type: size;
+        }
+
+        #clock-time {
+            /* Adaptive scaling based on container width (cqw) */
+            font-size: 22cqw;
+            font-weight: 700;
+            color: #F0EAD6;
+            /* Egg White */
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 5cqh;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .controls {
+            display: flex;
+            gap: 5cqw;
+            width: 80%;
+            justify-content: center;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #F0EAD6;
+            padding: 3cqh 6cqw;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 4cqw;
+            letter-spacing: 1px;
+            flex: 1;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #btn-toggle {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+
+        #btn-toggle:hover {
+            background: rgba(46, 204, 113, 0.4);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+        }
+
+        #btn-toggle.running {
+            background: rgba(231, 76, 60, 0.2);
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+
+        #btn-toggle.running:hover {
+            background: rgba(231, 76, 60, 0.4);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.2);
+        }
+
+        #btn-reset {
+            background: rgba(241, 196, 15, 0.2);
+            border-color: rgba(241, 196, 15, 0.3);
+        }
+
+        #btn-reset:hover {
+            background: rgba(241, 196, 15, 0.4);
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.2);
+        }
+
+        .header-content {
+            text-align: center;
+            margin-bottom: 2rem;
+            z-index: 10;
+        }
+
+        .header-content h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: auto;
+            flex: none;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="background-overlay"></div>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+
+    <div class="header-content">
+        <h1>Floating Stopwatch App</h1>
+        <p>Drag the timer around! Use buttons to control.</p>
+    </div>
+
+    <div id="clock-container">
+        <div id="clock-time">00:00:00</div>
+        <div class="controls">
+            <button id="btn-toggle" onclick="toggleTimer()">Start</button>
+            <button id="btn-reset" onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <script src="/static/js/clock.js"></script>
+    <script>
+        // Check for Auth
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/';
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+
+</html>

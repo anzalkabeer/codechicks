@@ -1,0 +1,17 @@
+# Backend Dependencies (Pip Packages)
+fastapi
+uvicorn
+
+# Standard Library Modules Used (Built-in, no install needed):
+# - datetime
+# - time
+
+# Frontend Technologies (Built-in, no install needed):
+# - HTML5
+# - CSS3 (Vanilla)
+# - JavaScript (Vanilla)
+
+# Auth Dependencies
+python-jose[cryptography]
+passlib[bcrypt]
+multipart   

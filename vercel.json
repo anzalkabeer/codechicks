@@ -1,0 +1,14 @@
+{
+    "builds": [
+        {
+            "src": "clock_.py",
+            "use": "@vercel/python"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "clock_.py"
+        }
+    ]
+}
