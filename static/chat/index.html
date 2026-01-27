@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - CodeChicks</title>
+    <link rel="stylesheet" href="/static/chat/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Auth check - redirects if no token -->
+    <script src="/static/js/auth.js"></script>
+
+    <div class="background-overlay"></div>
+
+    <!-- MOCKUP BANNER -->
+    <div class="mockup-banner">
+        ⚠️ MOCKUP UI - This is a temporary interface for testing endpoints. Design will change.
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>CodeChicks</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+                <li class="active"><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
+                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+            <div class="nav-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1><i class="fas fa-comments"></i> Global Chat</h1>
+                <div class="chat-status">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+            </header>
+
+            <!-- Chat Container -->
+            <div class="chat-container">
+                <!-- Messages Area -->
+                <div class="messages-area" id="messagesArea">
+                    <div class="loading-indicator" id="loadingMessages">
+                        <i class="fas fa-spinner fa-spin"></i> Loading messages...
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div class="message-input-container">
+                    <form id="messageForm" onsubmit="sendMessage(event)">
+                        <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off"
+                            required>
+                        <button type="submit" id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <footer class="page-footer">
+                <span id="messageCount">-- messages</span> •
+                <button class="refresh-btn" onclick="loadMessages()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        let currentUserEmail = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await getCurrentUser();
+            if (user) {
+                currentUserEmail = user.email;
+            }
+            await loadMessages();
+            await loadChatStatus();
+
+            // Auto-refresh every 5 seconds
+            setInterval(loadMessages, 5000);
+        });
+
+        async function loadChatStatus() {
+            try {
+                const response = await authFetch('/api/chat/status');
+                if (response && response.ok) {
+                    const data = await response.json();
+                    document.getElementById('statusText').textContent =
+                        `${data.total_messages} messages`;
+                    document.querySelector('.status-dot').classList.add('connected');
+                }
+            } catch (error) {
+                document.getElementById('statusText').textContent = 'Offline';
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const response = await authFetch('/api/chat/messages?page_size=50');
+                if (!response || !response.ok) return;
+
+                const data = await response.json();
+                const area = document.getElementById('messagesArea');
+                const loading = document.getElementById('loadingMessages');
+
+                if (loading) loading.style.display = 'none';
+
+                // Clear and rebuild messages (reverse to show oldest first)
+                const messages = data.messages.reverse();
+
+                if (messages.length === 0) {
+                    area.innerHTML = '<div class="empty-state"><i class="fas fa-comment-slash"></i><p>No messages yet. Start the conversation!</p></div>';
+                    return;
+                }
+
+                area.innerHTML = messages.map(msg => `
+                    <div class="message ${msg.sender_id === currentUserEmail ? 'own' : ''}">
+                        <div class="message-header">
+                            <span class="sender">${escapeHtml(msg.sender_name || msg.sender_id)}</span>
+                            <span class="time">${formatTime(msg.timestamp)}</span>
+                        </div>
+                        <div class="message-content">${escapeHtml(msg.content)}</div>
+                    </div>
+                `).join('');
+
+                // Scroll to bottom
+                area.scrollTop = area.scrollHeight;
+
+                // Update count
+                document.getElementById('messageCount').textContent =
+                    `${data.total_count} message${data.total_count !== 1 ? 's' : ''}`;
+
+            } catch (error) {
+                console.error('Failed to load messages:', error);
+            }
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+
+            const input = document.getElementById('messageInput');
+            const btn = document.getElementById('sendBtn');
+            const content = input.value.trim();
+
+            if (!content) return;
+
+            btn.disabled = true;
+            input.disabled = true;
+
+            try {
+                const response = await authFetch('/api/chat/messages', {
+                    method: 'POST',
+                    body: JSON.stringify({ content: content })
+                });
+
+                if (response && response.ok) {
+                    input.value = '';
+                    await loadMessages(); // Refresh to show new message
+                } else {
+                    alert('Failed to send message');
+                }
+            } catch (error) {
+                console.error('Send error:', error);
+                alert('Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        function formatTime(timestamp) {
+            // Server sends IST timestamps with timezone offset
+            const date = new Date(timestamp);
+            const now = new Date();
+
+            // Format options - use IST timezone explicitly
+            const timeOptions = {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+            };
+            const dateOptions = {
+                month: 'short',
+                day: 'numeric',
+                timeZone: 'Asia/Kolkata'
+            };
+
+            // Check if same day in IST
+            const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                timeZone: 'Asia/Kolkata'
+            });
+            const isToday = dateFormatter.format(date) === dateFormatter.format(now);
+
+            if (isToday) {
+                return date.toLocaleTimeString('en-IN', timeOptions);
+            }
+            return date.toLocaleDateString('en-IN', dateOptions) +
+                ' ' + date.toLocaleTimeString('en-IN', timeOptions);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

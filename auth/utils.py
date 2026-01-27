@@ -1,11 +1,16 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
+import os
+from dotenv import load_dotenv
 
-# Configuration
-SECRET_KEY = "CHANGE_THIS_TO_A_SECURE_RANDOM_STRING_IN_PRODUCTION"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Load environment variables from .env file
+load_dotenv()
+
+# Configuration from environment variables
+SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE_THIS_TO_A_SECURE_RANDOM_STRING_IN_PRODUCTION")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
@@ -25,3 +30,4 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+

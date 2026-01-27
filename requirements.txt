@@ -16,4 +16,9 @@ python-jose[cryptography]
 passlib[bcrypt]
 multipart  
 
-# DB Initialization
+# Dev Dependencies
+python-dotenv
+fastapi[standard]
+
+# Database
+beanie          # Async MongoDB ODM

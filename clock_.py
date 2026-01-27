@@ -1,18 +1,63 @@
 import datetime
-import time 
+import time
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from auth.router import router as auth_router
+from dotenv import load_dotenv
 
+from auth.router import router as auth_router
+from routers.dashboard import router as dashboard_router
+from routers.chat import router as chat_router
+from routers.profile import router as profile_router
+from database.connection import init_db, close_db
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-import time
 
-app = FastAPI()
+# Load environment variables
+load_dotenv()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan - handles startup and shutdown events."""
+    # Startup
+    await init_db()
+    yield
+    # Shutdown
+    await close_db()
+
+
+app = FastAPI(
+    title="CodeChicks API",
+    description="FastAPI backend with auth, dashboard, and global chat",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# --- CORS Middleware ---
+cors_origins = os.getenv("CORS_ORIGINS", "*")
+if cors_origins == "*":
+    origins = ["*"]
+else:
+    origins = [origin.strip() for origin in cors_origins.split(",")]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Include Routers ---
 app.include_router(auth_router)
+app.include_router(dashboard_router)
+app.include_router(chat_router)
+app.include_router(profile_router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -70,26 +115,46 @@ async def get_timer_status():
         elapsed_time=int(total_elapsed * 1000), 
         is_running=timer_state.is_running
     )
-@app.get("/api/dashboard", response_model=TimerResponse)
-async def dashboard():
-    return TimerResponse(
-        elapsed_time=int(timer_state.elapsed_time * 1000), 
-        is_running=timer_state.is_running
-    )
+# NOTE: /api/dashboard is now handled by routers/dashboard.py with auth protection
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    with open("static/login/login.html", "r") as f:
+    with open("static/login/login.html", "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/clock", response_class=HTMLResponse)
 async def clock_page():
-    with open("static/clock/index.html", "r") as f:
+    with open("static/clock/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page():
-    with open("static/login/register.html", "r") as f:
+    with open("static/login/register.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    """Serve dashboard UI (mockup)"""
+    with open("static/dashboard/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_page():
+    """Serve chat UI (mockup)"""
+    with open("static/chat/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/onboarding", response_class=HTMLResponse)
+async def onboarding_page():
+    """Serve onboarding UI (mockup)"""
+    with open("static/onboarding/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page():
+    """Serve settings UI (mockup)"""
+    with open("static/settings/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

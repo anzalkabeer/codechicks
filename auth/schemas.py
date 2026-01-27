@@ -4,6 +4,8 @@ from typing import Optional
 class User(BaseModel):
     email: str
     disabled: Optional[bool] = None
+    username: Optional[str] = None
+    display_name: Optional[str] = None
 
 class UserInDB(User):
     hashed_password: str

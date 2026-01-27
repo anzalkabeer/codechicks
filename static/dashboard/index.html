@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CodeChicks</title>
+    <link rel="stylesheet" href="/static/dashboard/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Auth check - redirects if no token -->
+    <script src="/static/js/auth.js"></script>
+
+    <div class="background-overlay"></div>
+
+    <!-- MOCKUP BANNER -->
+    <div class="mockup-banner">
+        ⚠️ MOCKUP UI - This is a temporary interface for testing endpoints. Design will change.
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>CodeChicks</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active"><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+                <li><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
+                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+            <div class="nav-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1>Dashboard</h1>
+                <div class="user-info">
+                    <span id="userEmail">Loading...</span>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalUsers">--</h3>
+                        <p>Total Users</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon active"><i class="fas fa-user-check"></i></div>
+                    <div class="stat-info">
+                        <h3 id="activeUsers">--</h3>
+                        <p>Active Users</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon new"><i class="fas fa-user-plus"></i></div>
+                    <div class="stat-info">
+                        <h3 id="newUsers">--</h3>
+                        <p>New Today</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon messages"><i class="fas fa-envelope"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalMessages">--</h3>
+                        <p>Total Messages</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activity Section -->
+            <section class="activity-section">
+                <div class="section-card">
+                    <h2><i class="fas fa-chart-line"></i> Activity Summary</h2>
+                    <div class="activity-stats">
+                        <div class="activity-item">
+                            <span class="label">Total Sessions</span>
+                            <span class="value" id="totalSessions">--</span>
+                        </div>
+                        <div class="activity-item">
+                            <span class="label">Avg Session</span>
+                            <span class="value" id="avgSession">-- min</span>
+                        </div>
+                        <div class="activity-item">
+                            <span class="label">Timer Starts</span>
+                            <span class="value" id="timerStarts">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h2><i class="fas fa-info-circle"></i> Quick Actions</h2>
+                    <div class="quick-actions">
+                        <a href="/chat" class="action-btn"><i class="fas fa-comment"></i> Open Chat</a>
+                        <a href="/clock" class="action-btn"><i class="fas fa-play"></i> Start Timer</a>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="page-footer">
+                <p>Last updated: <span id="lastUpdated">--</span></p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserInfo();
+            await loadDashboardData();
+        });
+
+        async function loadUserInfo() {
+            const user = await getCurrentUser();
+            if (user) {
+                // Display username if available, otherwise fall back to email
+                document.getElementById('userEmail').textContent = user.username || user.email;
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                const response = await authFetch('/api/dashboard');
+                if (!response || !response.ok) {
+                    console.error('Failed to load dashboard');
+                    return;
+                }
+
+                const data = await response.json();
+
+                // User Stats
+                document.getElementById('totalUsers').textContent = data.user_stats.total_users;
+                document.getElementById('activeUsers').textContent = data.user_stats.active_users;
+                document.getElementById('newUsers').textContent = data.user_stats.new_users_today;
+
+                // Global Metrics
+                document.getElementById('totalMessages').textContent = data.global_metrics.total_messages_sent;
+                document.getElementById('timerStarts').textContent = data.global_metrics.total_timer_starts;
+
+                // Activity
+                document.getElementById('totalSessions').textContent = data.activity_summary.total_sessions;
+                document.getElementById('avgSession').textContent =
+                    data.activity_summary.average_session_minutes.toFixed(1) + ' min';
+
+                // Timestamp
+                document.getElementById('lastUpdated').textContent =
+                    new Date(data.last_updated).toLocaleString();
+
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - CodeChicks</title>
+    <link rel="stylesheet" href="/static/onboarding/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Auth check - redirects if no token -->
+    <script src="/static/js/auth.js"></script>
+
+    <div class="background-overlay"></div>
+
+    <!-- MOCKUP BANNER -->
+    <div class="mockup-banner">
+        ⚠️ MOCKUP UI - This is a temporary interface for testing. Design will change.
+    </div>
+
+    <div class="onboarding-container">
+        <div class="glass-card">
+            <div class="header-section">
+                <div class="progress-indicator">
+                    <div class="step active">1</div>
+                    <div class="step-line"></div>
+                    <div class="step">2</div>
+                </div>
+                <h1>Complete Your Profile</h1>
+                <p class="subtitle">Let's get to know you better!</p>
+            </div>
+
+            <form id="onboardingForm" onsubmit="submitOnboarding(event)">
+                <!-- Username (Required) -->
+                <div class="input-group">
+                    <label for="username">
+                        <i class="fas fa-at"></i> Username <span class="required">*</span>
+                    </label>
+                    <input type="text" id="username" placeholder="coolcoder123" minlength="3" maxlength="30"
+                        pattern="^[a-zA-Z0-9_]+$" required>
+                    <small class="helper-text">3-30 characters, letters, numbers, underscores only</small>
+                </div>
+
+                <!-- Display Name -->
+                <div class="input-group">
+                    <label for="displayName">
+                        <i class="fas fa-user"></i> Display Name
+                    </label>
+                    <input type="text" id="displayName" placeholder="Your Name" maxlength="50">
+                    <small class="helper-text">How others will see you (optional)</small>
+                </div>
+
+                <!-- Age -->
+                <div class="input-group">
+                    <label for="age">
+                        <i class="fas fa-birthday-cake"></i> Age
+                    </label>
+                    <input type="number" id="age" placeholder="25" min="13" max="120">
+                    <small class="helper-text">Must be 13 or older (optional)</small>
+                </div>
+
+                <!-- Bio -->
+                <div class="input-group">
+                    <label for="bio">
+                        <i class="fas fa-quote-left"></i> Bio
+                    </label>
+                    <textarea id="bio" placeholder="Tell us a bit about yourself..." maxlength="500"
+                        rows="3"></textarea>
+                    <small class="helper-text">Max 500 characters (optional)</small>
+                </div>
+
+                <div id="errorMessage" class="error-message"></div>
+
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <span id="btnText">Complete Profile</span>
+                    <div class="spinner" id="btnSpinner" style="display: none;"></div>
+                </button>
+
+                <p class="skip-link">
+                    <a href="#" onclick="skipOnboarding()">Skip for now</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function submitOnboarding(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+            const errorMsg = document.getElementById('errorMessage');
+
+            // Get form data
+            const username = document.getElementById('username').value.trim();
+            const displayName = document.getElementById('displayName').value.trim() || null;
+            const age = document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null;
+            const bio = document.getElementById('bio').value.trim() || null;
+
+            // Reset UI
+            errorMsg.textContent = '';
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                const response = await authFetch('/api/profile/complete', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: username,
+                        display_name: displayName,
+                        age: age,
+                        bio: bio
+                    })
+                });
+
+                if (!response) return; // Auth redirect happened
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Redirect to dashboard
+                    window.location.href = data.redirect_to || '/dashboard';
+                } else {
+                    errorMsg.textContent = data.detail || 'Failed to save profile.';
+                }
+            } catch (error) {
+                console.error('Onboarding error:', error);
+                errorMsg.textContent = 'Network error. Please try again.';
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function skipOnboarding() {
+            // Just redirect to dashboard without completing profile
+            window.location.href = '/dashboard';
+        }
+
+        // Check if profile is already complete
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await authFetch('/api/profile/status');
+                if (response && response.ok) {
+                    const data = await response.json();
+                    if (data.profile_complete) {
+                        // Already complete, redirect to dashboard
+                        window.location.href = '/dashboard';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to check profile status:', e);
+            }
+        });
+    </script>
+</body>
+
+</html>

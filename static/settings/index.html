@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - CodeChicks</title>
+    <link rel="stylesheet" href="/static/settings/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Auth check - redirects if no token -->
+    <script src="/static/js/auth.js"></script>
+
+    <div class="background-overlay"></div>
+
+    <!-- MOCKUP BANNER -->
+    <div class="mockup-banner">
+        ⚠️ MOCKUP UI - This is a temporary interface for testing. Design will change.
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>CodeChicks</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+                <li><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
+                <li class="active"><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+            <div class="nav-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1><i class="fas fa-cog"></i> Settings</h1>
+            </header>
+
+            <!-- Profile Section -->
+            <section class="settings-section">
+                <h2><i class="fas fa-user-circle"></i> Profile</h2>
+
+                <div class="profile-card" id="profileCard">
+                    <div class="profile-loading">
+                        <i class="fas fa-spinner fa-spin"></i> Loading profile...
+                    </div>
+                </div>
+
+                <form id="profileForm" style="display: none;" onsubmit="updateProfile(event)">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" disabled>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" minlength="3" maxlength="30">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="displayName">Display Name</label>
+                            <input type="text" id="displayName" maxlength="50">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="age">Age</label>
+                            <input type="number" id="age" min="13" max="120">
+                        </div>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="bio">Bio</label>
+                        <textarea id="bio" maxlength="500" rows="3"></textarea>
+                    </div>
+
+                    <div id="updateMessage" class="update-message"></div>
+
+                    <button type="submit" class="btn-primary" id="updateBtn">
+                        <span id="btnText"><i class="fas fa-save"></i> Save Changes</span>
+                        <div class="spinner" id="btnSpinner" style="display: none;"></div>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Account Section -->
+            <section class="settings-section">
+                <h2><i class="fas fa-shield-alt"></i> Account</h2>
+
+                <div class="settings-actions">
+                    <button class="btn-secondary" onclick="alert('Coming soon!')">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+
+                    <button class="btn-danger" onclick="confirmLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </section>
+
+            <!-- App Info -->
+            <section class="settings-section">
+                <h2><i class="fas fa-info-circle"></i> About</h2>
+                <div class="app-info">
+                    <p><strong>CodeChicks</strong> v1.0.0</p>
+                    <p>Timezone: IST (UTC+5:30)</p>
+                    <p id="memberSince">Member since: Loading...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let currentProfile = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                const response = await authFetch('/api/profile');
+                if (!response || !response.ok) {
+                    document.getElementById('profileCard').innerHTML =
+                        '<div class="error">Failed to load profile</div>';
+                    return;
+                }
+
+                currentProfile = await response.json();
+
+                // Hide loading, show form
+                document.getElementById('profileCard').style.display = 'none';
+                document.getElementById('profileForm').style.display = 'block';
+
+                // Populate form
+                document.getElementById('email').value = currentProfile.email;
+                document.getElementById('username').value = currentProfile.username || '';
+                document.getElementById('displayName').value = currentProfile.display_name || '';
+                document.getElementById('age').value = currentProfile.age || '';
+                document.getElementById('bio').value = currentProfile.bio || '';
+
+                // Member since
+                if (currentProfile.created_at) {
+                    const date = new Date(currentProfile.created_at);
+                    document.getElementById('memberSince').textContent =
+                        'Member since: ' + date.toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                }
+            } catch (error) {
+                console.error('Profile load error:', error);
+            }
+        }
+
+        async function updateProfile(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('updateBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+            const message = document.getElementById('updateMessage');
+
+            const updates = {
+                username: document.getElementById('username').value.trim() || null,
+                display_name: document.getElementById('displayName').value.trim() || null,
+                age: document.getElementById('age').value ? parseInt(document.getElementById('age').value) : null,
+                bio: document.getElementById('bio').value.trim() || null
+            };
+
+            message.textContent = '';
+            message.className = 'update-message';
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                const response = await authFetch('/api/profile', {
+                    method: 'PATCH',
+                    body: JSON.stringify(updates)
+                });
+
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.textContent = '✓ Profile updated successfully!';
+                    message.className = 'update-message success';
+                    currentProfile = data;
+                } else {
+                    message.textContent = data.detail || 'Failed to update profile.';
+                    message.className = 'update-message error';
+                }
+            } catch (error) {
+                message.textContent = 'Network error. Please try again.';
+                message.className = 'update-message error';
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = 'flex';
+                spinner.style.display = 'none';
+            }
+        }
+
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        }
+    </script>
+</body>
+
+</html>

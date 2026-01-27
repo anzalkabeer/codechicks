@@ -28,8 +28,18 @@ async function handleLogin(event) {
         if (response.ok) {
             // Store token
             localStorage.setItem('access_token', data.access_token);
-            // Redirect to dashboard/home
-            window.location.href = '/clock';
+
+            // Check if profile is complete, redirect accordingly
+            try {
+                const statusRes = await fetch('/api/profile/status', {
+                    headers: { 'Authorization': `Bearer ${data.access_token}` }
+                });
+                const statusData = await statusRes.json();
+                window.location.href = statusData.redirect_to || '/dashboard';
+            } catch (e) {
+                // Fallback to dashboard if status check fails
+                window.location.href = '/dashboard';
+            }
         } else {
             errorMsg.textContent = data.detail || 'Login failed. Please check your credentials.';
         }
@@ -73,8 +83,8 @@ async function handleRegister(event) {
         if (response.ok) {
             // Store token
             localStorage.setItem('access_token', data.access_token);
-            // Redirect to clock
-            window.location.href = '/clock';
+            // New users go to onboarding
+            window.location.href = '/onboarding';
         } else {
             errorMsg.textContent = data.detail || 'Registration failed.';
         }
