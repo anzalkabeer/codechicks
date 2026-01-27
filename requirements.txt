@@ -14,4 +14,6 @@ uvicorn
 # Auth Dependencies
 python-jose[cryptography]
 passlib[bcrypt]
-multipart   
+multipart  
+
+# DB Initialization
