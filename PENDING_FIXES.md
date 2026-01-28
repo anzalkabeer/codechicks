@@ -1,119 +1,182 @@
 # Pending Fixes & Technical Debt
 
-This document tracks known issues, bugs, and technical debt that need to be addressed in future development cycles.
+This document tracks known issues, bugs, and technical debt that need to be addressed.
 
-## 🐛 Bugs & Stability Issues
+---
 
-### 1. Server Shutdown Traceback
-**Severity:** Low (Development only)
-**Status:** ⏳ Open
-**Description:** 
-When stopping the development server (`fastapi dev`) via Ctrl+C, an exception traceback occasionally occurs during the shutdown process.
-**Context:**
-- Likely related to `asyncio` loop cleanup or the `motor`/`beanie` database connection closure not completing before the loop terminates.
-- Observed in `clock_.py` / `database/connection.py` lifespan handling.
-**Action:** Investigate graceful shutdown patterns for Beanie + FastAPI.
+## ⚠️ NEEDS USER INPUT
 
-### 2. ~~User Profile TOCTOU Vulnerability~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Changed username index to `sparse=True` to allow multiple None values
-- Added try/except around `user.save()` to catch duplicate key errors
+### ADMIN_KEY Security Pattern
+**Severity:** High  
+**Status:** ⏳ Awaiting Decision
 
-### 3. ~~Missing Disabled User Check~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Added `if user.disabled: raise credentials_exception` check in `get_current_user`
+The current shared ADMIN_KEY pattern is insecure. Options:
+1. **Improve current**: Add audit logging, rate limiting, MFA
+2. **Replace entirely**: Database-backed roles with User.isAdmin + AuditLog
+3. **Hybrid**: Keep for bootstrap, require DB promotion thereafter
 
-### 4. ~~Registration Missing Profile Fields~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Registration now sets `username` from email prefix and `display_name` from capitalized prefix
+**Action Required:** User to decide architecture before implementation.
 
-### 5. ~~Insecure "Host" Binding~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Updated `.env.example` with security warnings
-- Changed default `HOST` to `127.0.0.1`
+---
 
-### 6. ~~Insecure "Debug" Mode~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Added warning in `.env.example` about `DEBUG=true` exposing sensitive info
+## 🔴 Critical Security Issues
 
-## 🛠️ Technical Debt & TODOs
+### 1. Timing Attack on Admin Key
+**Severity:** High  
+**File:** `auth/router.py` lines 149-154  
+**Issue:** Direct string comparison vulnerable to timing attacks  
+**Fix:** Use `secrets.compare_digest()` for constant-time comparison
 
-### 1. WebSocket Integration for Chat
-**Severity:** High (Feature Gap)
-**Status:** ⏳ Open
-**Description:** 
-The chat system currently uses polling (HTTP requests every 5s) instead of real-time updates.
-**Locations:** 
-- `routers/chat.py`: `TODO: Broadcast to WebSocket connections`
-- `static/chat/index.html`: Remove polling logic.
-**Action:** Implement FastAPI WebSockets and `ConnectionManager`.
+### 2. DEBUG Defaults to True
+**Severity:** High  
+**File:** `auth/utils.py` line 14  
+**Issue:** Debug mode enabled by default exposes sensitive info  
+**Fix:** Change default to `"false"` so debug is opt-in
 
-### 2. ~~CORS Security~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- `allow_credentials` set to `False` when using wildcard (`*`) origins
+### 3. ADMIN_KEY Missing Production Check
+**Severity:** High  
+**File:** `auth/utils.py` lines 17-21  
+**Issue:** No production check like SECRET_KEY has  
+**Fix:** Add ValueError when DEBUG=false and ADMIN_KEY is default
 
-### 3. ~~Secret Key Security~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Added production check: raises `ValueError` if default `SECRET_KEY` used with `DEBUG=false`
+### 4. Admin Page No Server-Side Auth
+**Severity:** High  
+**File:** `clock_.py` lines 163-167  
+**Issue:** Admin HTML served without authorization check  
+**Fix:** Add `Depends(get_current_admin)` to route handler
 
-### 4. ~~Database Connection Cleanup~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- `_client` set to `None` after closing in `close_db()`
+### 5. Last Admin Self-Downgrade
+**Severity:** Medium  
+**File:** `auth/router.py` lines 170-185  
+**Issue:** Last admin can remove their own admin role  
+**Fix:** Add check for admin count before allowing downgrade
 
-### 5. ~~MongoDB Models~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Changed `username` field to use `sparse=True` index
+---
 
-### 6. ~~Dashboard & Chat API Cleanup~~ ✅ FIXED (Partial)
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- Replaced `datetime.utcnow()` with `datetime.now(timezone.utc)`
-- Removed unused `page`/`page_size` parameters from dashboard endpoint
+## 🟠 Backend Issues
 
-### 7. ~~Token Expiry Configuration~~ ✅ FIXED
-**Status:** ✅ Fixed (2026-01-29)
-**Resolution:**
-- `create_access_token` now uses `ACCESS_TOKEN_EXPIRE_MINUTES` from env when `expires_delta` is None
+### 6. Username Generation Collisions
+**Severity:** Medium  
+**File:** `auth/router.py` lines 91-102  
+**Issue:** Email prefix may contain special chars, cause collisions  
+**Fix:** Sanitize input, check uniqueness, append suffix if needed
 
-### 8. Frontend Polish & Reliability
+### 7. PydanticObjectId Import Location
+**Severity:** Low  
+**File:** `routers/admin.py` lines 154-162  
+**Issue:** Import inside function, bare except clause  
+**Fix:** Move import to top, catch specific `InvalidId` exception
 
-#### Dashboard (`static/dashboard/index.html`)
-**Status:** ⏳ Open
-- **Action:** Add SRI hashes and `crossorigin` to external CDN links (Fonts/Icons).
-- **Action:** Handle `getCurrentUser` failures gracefully (don't stick on "Loading...").
-- **Action:** Add defensive checks (optional chaining) for nested data fields (`user_stats`, etc.) to prevent crashes.
+### 8. Timezone Mismatch in Admin Stats
+**Severity:** Medium  
+**File:** `routers/admin.py` lines 39-45  
+**Issue:** today_start timezone may not match DB timestamps  
+**Fix:** Ensure consistent timezone handling
 
-#### Chat (`static/chat/index.html`)
-**Status:** ⏳ Open
-- **Action:** Update status dot classes correctly in catch block (remove `connected`).
+### 9. Unbounded Limit in get_all_users
+**Severity:** Medium  
+**File:** `routers/admin.py` lines 56-67  
+**Issue:** No max limit allows fetching entire DB  
+**Fix:** Use `Query(default=100, ge=1, le=1000)`
 
-#### Settings (`static/settings/index.html` & `.css`)
-**Status:** ⏳ Open
-- **Action:** Handle profile load errors by hiding spinner and showing error message.
-- **Action:** Ensure UI cleanup (spinner/button) in `finally` block for `authFetch`.
-- **Action:** Add `@import` for Outfit font and improved fallback font stack.
+### 10. update_user_role Design Issues
+**Severity:** Medium  
+**File:** `routers/admin.py` lines 83-110  
+**Issue:** Role as function param (not body), allows self-demotion  
+**Fix:** Accept role from request body, prevent self-demotion
 
-#### Styling & UX
-**Status:** ⏳ Open
-- **Action:** Add keyboard focus styles to nav links (`static/dashboard/style.css`).
-- **Action:** Use WebKit prefix for backdrop-filter in `.glass-card` (`static/onboarding/style.css`).
-- **Action:** Increase placeholder text contrast (`static/onboarding/style.css`).
-- **Action:** Validate redirect URLs in login script (`static/login/script.js`).
+---
 
-## 📚 Documentation Updates
+## 🟡 Frontend Issues
 
-### DEVLOG.md
-**Status:** ⏳ Open
-- **Action:** Update environment variable table (Mark `MONGODB_URI` required, add `DATABASE_NAME`).
-- **Action:** Clarify "Redis + Netlify" stack description.
-- **Action:** Update "Frontend Pages" roadmap status (mark as mockups completed).
-- **Action:** Update "User Profiles" roadmap status (already completed).
+### 11. Admin checkAdminAccess Silent Failure
+**Severity:** Medium  
+**File:** `static/admin/index.html` lines 152-154  
+**Issue:** Early return on failure leaves user on page  
+**Fix:** Redirect to login/dashboard on failure
+
+### 12. refreshStats Implicit Event
+**Severity:** Low  
+**File:** `static/admin/index.html` lines 185-195  
+**Issue:** Uses implicit global `event` variable  
+**Fix:** Pass event as function parameter
+
+### 13. Mobile Sidebar Completely Hidden
+**Severity:** Medium  
+**Files:** `static/admin/style.css`, `static/clock/index.html`  
+**Issue:** Sidebar hidden on mobile removes navigation  
+**Fix:** Add hamburger menu / toggleable mobile nav
+
+### 14. Missing Keyboard Focus Styles
+**Severity:** Medium  
+**Files:** Multiple CSS files  
+**Issue:** No `:focus-visible` styles for interactive elements  
+**Fix:** Add focus styles matching hover states
+
+### 15. Safari Backdrop-Filter Prefix
+**Severity:** Low  
+**Files:** `static/chat/style.css`, `static/settings/style.css`  
+**Issue:** Missing `-webkit-backdrop-filter` for Safari  
+**Fix:** Add webkit prefix before standard property
+
+### 16. Clock Page getCurrentUser Unhandled
+**Severity:** Low  
+**File:** `static/clock/index.html` lines 390-395  
+**Issue:** No try-catch around async call  
+**Fix:** Wrap in try-catch, hide adminLink on failure
+
+### 17. Dashboard usersCard Flash
+**Severity:** Low  
+**File:** `static/dashboard/index.html` lines 84-85  
+**Issue:** Admin-only card may flash before JS hides it  
+**Fix:** Add inline `style="display: none;"` as default
+
+### 18. Onboarding Mobile Height
+**Severity:** Low  
+**File:** `static/onboarding/style.css` lines 276-284  
+**Issue:** Fixed height causes content clipping  
+**Fix:** Replace with max-height: auto, overflow-y: auto
+
+### 19. Settings Password Update Early Return
+**Severity:** Medium  
+**File:** `static/settings/index.html` lines 364-373  
+**Issue:** Early return bypasses finally, leaves UI loading  
+**Fix:** Throw error instead of returning
+
+### 20. Settings upgradeToAdmin Early Return
+**Severity:** Medium  
+**File:** `static/settings/index.html` lines 409-415  
+**Issue:** Early return leaves button stuck in loading  
+**Fix:** Ensure UI reset in all paths
+
+---
+
+## 📚 Documentation
+
+### 21. DEVLOG Missing ADMIN_KEY Entry
+**File:** `DEVLOG.md` lines 32-33  
+**Fix:** Add ADMIN_KEY to environment variables section
+
+### 22. ROADMAP Future Date
+**File:** `ROADMAP.md` line 5  
+**Issue:** Shows "Jan 29, 2026" which is future  
+**Fix:** Update to current date
+
+### 23. Forgot Password Priority
+**File:** `ROADMAP.md` line 134  
+**Issue:** In "Random Ideas" but should be higher priority  
+**Fix:** Move to Medium/High priority section
+
+---
+
+## ✅ Previously Fixed (2026-01-29)
+
+- [x] TOCTOU Vulnerability (sparse index + try/except)
+- [x] Disabled User Check
+- [x] Registration Defaults
+- [x] .env Security Warnings
+- [x] CORS Security (credentials + wildcard)
+- [x] SECRET_KEY Production Check
+- [x] DB Connection Cleanup
+- [x] Deprecated datetime.utcnow()
+- [x] Token Expiry Default
