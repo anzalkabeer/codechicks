@@ -163,8 +163,16 @@ async def upgrade_to_admin(
     The admin key is stored in the .env file.
     """
     # Verify admin key using constant-time comparison to prevent timing attacks
-    if not secrets.compare_digest(request.admin_key or "", ADMIN_KEY or ""):
+    if not ADMIN_KEY:
         raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Admin key not configured"
+        )
+    if not request.admin_key or not secrets.compare_digest(request.admin_key, ADMIN_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid admin key"
+        )        raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid admin key"
         )
