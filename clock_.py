@@ -2,12 +2,13 @@ import datetime
 import time
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from dotenv import load_dotenv
 
-from auth.router import router as auth_router
+from auth.router import router as auth_router, get_current_admin
+from auth.schemas import User
 from routers.dashboard import router as dashboard_router
 from routers.chat import router as chat_router
 from routers.profile import router as profile_router

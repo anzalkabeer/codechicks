@@ -4,10 +4,18 @@ Admin Router - Admin-only endpoints for managing the application.
 Provides stats, user management, and moderation endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status, Body
 from auth.router import get_current_admin
 from auth.schemas import User
 from database.models import UserDocument, MessageDocument, UserRole
+from utils.timezone import now_ist
+from beanie import PydanticObjectId
+from bson.errors import InvalidId
+from pydantic import BaseModel
+from datetime import datetime
+
+class RoleUpdate(BaseModel):
+    role: str
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -36,9 +44,6 @@ async def get_admin_stats(current_user: User = Depends(get_current_admin)):
     total_messages = await MessageDocument.count()
     
     # Count new users today
-    from datetime import datetime, timedelta
-    from utils.timezone import now_ist
-    
     today_start = now_ist().replace(hour=0, minute=0, second=0, microsecond=0)
     new_users_today = await UserDocument.find(
         UserDocument.created_at >= today_start
@@ -56,7 +61,7 @@ async def get_admin_stats(current_user: User = Depends(get_current_admin)):
 @router.get("/users")
 async def get_all_users(
     skip: int = 0,
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=1000),
     current_user: User = Depends(get_current_admin)
 ):
     """
@@ -83,7 +88,7 @@ async def get_all_users(
 @router.patch("/users/{email}/role")
 async def update_user_role(
     email: str,
-    role: str,
+    role_data: RoleUpdate,
     current_user: User = Depends(get_current_admin)
 ):
     """
@@ -91,10 +96,18 @@ async def update_user_role(
     
     Admin-only endpoint.
     """
+    role = role_data.role
     if role not in ["user", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Role must be 'user' or 'admin'"
+        )
+        
+    # Prevent admin from demoting themselves
+    if email == current_user.email and role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot demote your own account. Ask another admin."
         )
     
     user = await UserDocument.find_one(UserDocument.email == email)
@@ -151,11 +164,9 @@ async def delete_message(
     
     Admin-only endpoint.
     """
-    from beanie import PydanticObjectId
-    
     try:
         message = await MessageDocument.get(PydanticObjectId(message_id))
-    except:
+    except (InvalidId, ValueError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid message ID"

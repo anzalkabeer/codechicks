@@ -370,7 +370,7 @@
                     })
                 });
 
-                if (!response) return;
+                if (!response) throw new Error('No response from server');
 
                 const data = await response.json();
 
@@ -412,7 +412,7 @@
                     body: JSON.stringify({ admin_key: adminKey })
                 });
 
-                if (!response) return;
+                if (!response) throw new Error('No response from server');
 
                 const data = await response.json();
 

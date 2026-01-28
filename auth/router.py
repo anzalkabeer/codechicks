@@ -11,6 +11,9 @@ from auth.schemas import User, UserRegister, UserLogin, Token, TokenData, AdminK
 from auth.utils import verify_password, get_password_hash, create_access_token, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, ADMIN_KEY
 from datetime import timedelta
 from database.models import UserDocument, UserRole
+import secrets
+import re
+import random
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -89,16 +92,29 @@ async def register(user: UserRegister):
     # Hash password and create user document
     hashed_password = get_password_hash(user.password)
     
-    # Generate default username from email prefix
-    email_prefix = user.email.split('@')[0]
+    # Generate sanitary and unique username from email prefix
+    base_username = user.email.split('@')[0].lower()
+    # Remove special characters, keep alphanumeric
+    base_username = re.sub(r'[^a-z0-9]', '', base_username)
+    if not base_username:
+        base_username = f"user{random.randint(1000, 9999)}"
+        
+    # Ensure uniqueness
+    username = base_username
+    counter = 1
+    while await UserDocument.find_one(UserDocument.username == username):
+        username = f"{base_username}{counter}"
+        counter += 1
+    
+    display_name = username.title() if len(username) > 2 else "User"
     
     new_user = UserDocument(
         email=user.email,
         hashed_password=hashed_password,
         disabled=False,
         role=UserRole.USER,
-        username=email_prefix,  # Default username from email
-        display_name=email_prefix.title()  # Default display name
+        username=username,
+        display_name=display_name
     )
     await new_user.insert()
     
@@ -146,8 +162,8 @@ async def upgrade_to_admin(
     
     The admin key is stored in the .env file.
     """
-    # Verify admin key
-    if request.admin_key != ADMIN_KEY:
+    # Verify admin key using constant-time comparison to prevent timing attacks
+    if not secrets.compare_digest(request.admin_key or "", ADMIN_KEY or ""):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid admin key"
@@ -178,6 +194,14 @@ async def downgrade_to_user(current_user: User = Depends(get_current_user)):
     
     if user_doc.role == UserRole.USER:
         return {"message": "You are already a regular user", "role": "user"}
+    
+    # Safeguard: Prevent the last admin from downgrading
+    admin_count = await UserDocument.find(UserDocument.role == UserRole.ADMIN).count()
+    if admin_count <= 1:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot downgrade the last admin account. Promote another user first."
+        )
     
     user_doc.role = UserRole.USER
     await user_doc.save()

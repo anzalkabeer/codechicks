@@ -464,6 +464,7 @@ python -m uvicorn clock_:app --reload --host 127.0.0.1 --port 8000
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Token expiry |
 | `CORS_ORIGINS` | `*` | Allowed CORS origins |
 | `MONGODB_URI` | (optional) | MongoDB connection string |
+| `ADMIN_KEY` | (required) | Secret key for admin upgrades |
 
 ---
 

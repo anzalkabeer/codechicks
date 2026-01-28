@@ -20,7 +20,10 @@
     <div class="admin-container">
         <!-- Header -->
         <header class="admin-header glass-panel">
-            <div class="header-left">
+            <div class="header-left" style="display: flex; align-items: center;">
+                <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="logo">
                     <span class="logo-icon">👑</span>
                     <span class="logo-text">Admin Panel</span>
@@ -108,7 +111,7 @@
                         <i class="fas fa-broom"></i>
                         <span>Moderate Chat</span>
                     </a>
-                    <button class="action-btn" onclick="refreshStats()">
+                    <button class="action-btn" onclick="refreshStats(event)">
                         <i class="fas fa-sync-alt"></i>
                         <span>Refresh Stats</span>
                     </button>
@@ -150,7 +153,10 @@
         async function checkAdminAccess() {
             try {
                 const response = await authFetch('/auth/me');
-                if (!response || !response.ok) return;
+                if (!response || !response.ok) {
+                    window.location.href = '/dashboard';
+                    return;
+                }
 
                 const user = await response.json();
                 if (user.role !== 'admin') {
@@ -182,7 +188,7 @@
             }
         }
 
-        async function refreshStats() {
+        async function refreshStats(event) {
             const btn = event.target.closest('.action-btn');
             const icon = btn.querySelector('i');
             icon.classList.add('fa-spin');

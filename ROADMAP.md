@@ -2,7 +2,7 @@
 
 This is the current Roadmap we need to work on for this project.
 
-Last updated: Jan 29, 2026
+Last updated: Jan 28, 2026
 
 ---
 
@@ -54,6 +54,10 @@ The current polling every 5 seconds is... not great. Every time I test with frie
 - [ ] Bio with markdown support
 - [ ] Social links (GitHub, Twitter, etc)
 - [ ] "Member since" badge tiers (1 month, 6 months, 1 year...)
+- [ ] Forgot password flow — Medium/High priority (Owner: TBD, ETA: Q1 2026)
+  - [ ] Reset token generation & secure delivery
+  - [ ] Account recovery UX & token expiry
+  - [ ] See security notes for compliance
 
 ### Timer/Stopwatch Upgrades
 
@@ -131,7 +135,6 @@ Just throwing these here so I don't forget:
 - Custom user themes
 - Bot/webhook system for chat
 - Two-factor authentication
-- Forgot password flow (currently not implemented!)
 
 ---
 
