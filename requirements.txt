@@ -14,7 +14,7 @@ uvicorn
 # Auth Dependencies
 python-jose[cryptography]
 passlib[bcrypt]
-multipart  
+python-multipart  
 
 # Dev Dependencies
 python-dotenv
@@ -22,3 +22,4 @@ fastapi[standard]
 
 # Database
 beanie          # Async MongoDB ODM
+motor           # Async MongoDB driver (required by Beanie)

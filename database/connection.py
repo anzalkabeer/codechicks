@@ -30,14 +30,28 @@ async def init_db():
     mongodb_uri = os.getenv("MONGODB_URI", "mongodb://127.0.0.1:27017")
     database_name = os.getenv("DATABASE_NAME", "codechicks")
     
-    _client = AsyncIOMotorClient(mongodb_uri)
-    
-    await init_beanie(
-        database=_client[database_name],
-        document_models=[UserDocument, MessageDocument]
-    )
-    
-    print(f"✅ Connected to MongoDB: {database_name}")
+    try:
+        # Add serverSelectionTimeoutMS for faster failure detection
+        _client = AsyncIOMotorClient(
+            mongodb_uri,
+            serverSelectionTimeoutMS=5000,  # 5 second timeout
+            connectTimeoutMS=5000,
+            socketTimeoutMS=5000
+        )
+        
+        # Test the connection
+        await _client.admin.command('ping')
+        
+        await init_beanie(
+            database=_client[database_name],
+            document_models=[UserDocument, MessageDocument]
+        )
+        
+        print(f"✅ Connected to MongoDB: {database_name}")
+    except Exception as e:
+        print(f"❌ MongoDB connection failed: {e}")
+        # Re-raise to let the app know about the failure
+        raise
 
 
 async def close_db():

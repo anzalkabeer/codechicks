@@ -18,6 +18,35 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ## Changelog
 
+### [2026-01-28] - Glassmorphism UI Integration
+
+**Contributor:** Keshav
+
+#### ✅ Completed
+
+**New Dashboard UI:**
+- Replaced mockup UI with modern dark glassmorphism design
+- Updated to Inter font family
+- Added sidebar navigation (Dashboard, Chat, Timer, Settings)
+- Stat cards connected to existing API endpoints
+- Floating stopwatch widget with drag functionality
+- Activity summary and online users indicators
+
+**New Chat UI:**
+- Replaced mockup UI with matching glassmorphism design
+- Sidebar with navigation and online users section
+- Modern message bubbles (self vs. other styling with avatar colors)
+- Maintained IST timezone formatting for timestamps
+- Preserved all existing messaging functionality
+
+**Files Modified:**
+- `static/dashboard/index.html` - New glassmorphism dashboard layout
+- `static/dashboard/style.css` - New dark theme styles
+- `static/chat/index.html` - New glassmorphism chat layout
+- `static/chat/style.css` - New dark theme styles
+
+---
+
 ### [2026-01-28] - Username/Display Name & Settings Navigation
 
 **Contributor:** Keshav
@@ -383,4 +412,4 @@ python -m uvicorn clock_:app --reload --host 127.0.0.1 --port 8000
 
 ---
 
-*Last Updated: 2026-01-28 by Keshav*
+*Last Updated: 2026-01-28 by Keshav - Glassmorphism UI Integration*

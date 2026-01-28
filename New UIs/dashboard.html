@@ -9,14 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/dashboard/style.css">
+    <link rel="stylesheet" href="dashboard.css">
 </head>
 
 <body>
-    <!-- Auth check - redirects if no token -->
-    <script src="/static/js/auth.js"></script>
-
     <div class="dashboard-container">
         <!-- Header -->
         <header class="dashboard-header glass-panel">
@@ -27,22 +23,12 @@
                 </div>
             </div>
             <div class="header-center">
-                <h1 class="welcome-text">Welcome back, <span class="user-name" id="userName">User</span>!</h1>
+                <h1 class="welcome-text">Welcome back, <span class="user-name">User</span>!</h1>
             </div>
             <div class="header-right">
                 <button class="logout-btn glass-btn" onclick="logout()">Logout</button>
             </div>
         </header>
-
-        <!-- Navigation Sidebar -->
-        <nav class="sidebar glass-panel">
-            <ul class="nav-links">
-                <li class="active"><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
-                <li><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
-                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
-            </ul>
-        </nav>
 
         <!-- Main Content -->
         <main class="dashboard-main">
@@ -52,8 +38,8 @@
                 <div class="stat-card glass-panel">
                     <div class="stat-icon">⏱️</div>
                     <div class="stat-info">
-                        <span class="stat-value" id="timerStarts">--</span>
-                        <span class="stat-label">Timer Sessions</span>
+                        <span class="stat-value" id="stopwatch-sessions">5</span>
+                        <span class="stat-label">Stopwatch Sessions</span>
                     </div>
                 </div>
 
@@ -61,8 +47,8 @@
                 <div class="stat-card glass-panel">
                     <div class="stat-icon">⏳</div>
                     <div class="stat-info">
-                        <span class="stat-value" id="avgSession">-- min</span>
-                        <span class="stat-label">Avg Session</span>
+                        <span class="stat-value" id="total-time">2h 45m</span>
+                        <span class="stat-label">Total Focused Time</span>
                     </div>
                 </div>
 
@@ -70,17 +56,8 @@
                 <div class="stat-card glass-panel">
                     <div class="stat-icon">💬</div>
                     <div class="stat-info">
-                        <span class="stat-value" id="totalMessages">--</span>
-                        <span class="stat-label">Total Messages</span>
-                    </div>
-                </div>
-
-                <!-- Users Card -->
-                <div class="stat-card glass-panel">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-info">
-                        <span class="stat-value" id="totalUsers">--</span>
-                        <span class="stat-label">Total Users</span>
+                        <span class="stat-value" id="chat-joins">3</span>
+                        <span class="stat-label">Chat Sessions</span>
                     </div>
                 </div>
             </section>
@@ -93,12 +70,12 @@
                         <h2 class="card-title">💬 Global Chat</h2>
                         <div class="online-indicator">
                             <span class="online-dot"></span>
-                            <span class="online-text" id="activeUsers">-- online</span>
+                            <span class="online-text">8 online</span>
                         </div>
                     </div>
                     <div class="card-body">
                         <p class="card-desc">Join the community chat and connect with other devs.</p>
-                        <a href="/chat" class="join-chat-btn glass-btn">Join Chat →</a>
+                        <a href="#" class="join-chat-btn glass-btn">Join Chat →</a>
                     </div>
                 </div>
 
@@ -106,21 +83,41 @@
                 <div class="history-card glass-panel">
                     <div class="card-header">
                         <h2 class="card-title">📊 Your Activity</h2>
-                        <span class="last-updated" id="lastUpdated">--</span>
                     </div>
-                    <div class="history-list" id="activityList">
+                    <div class="history-list">
                         <div class="history-item">
-                            <span class="history-icon">📈</span>
+                            <span class="history-icon">⏱️</span>
                             <div class="history-content">
-                                <span class="history-text">Total Sessions: <strong id="totalSessions">--</strong></span>
-                                <span class="history-time">All time activity</span>
+                                <span class="history-text">Stopwatch session - 45 min</span>
+                                <span class="history-time">Today, 2:30 PM</span>
                             </div>
                         </div>
                         <div class="history-item">
-                            <span class="history-icon">👤</span>
+                            <span class="history-icon">💬</span>
                             <div class="history-content">
-                                <span class="history-text">New Users Today: <strong id="newUsers">--</strong></span>
-                                <span class="history-time">Community growth</span>
+                                <span class="history-text">Joined Global Chat</span>
+                                <span class="history-time">Today, 1:15 PM</span>
+                            </div>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-icon">⏱️</span>
+                            <div class="history-content">
+                                <span class="history-text">Stopwatch session - 30 min</span>
+                                <span class="history-time">Yesterday, 5:00 PM</span>
+                            </div>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-icon">⏱️</span>
+                            <div class="history-content">
+                                <span class="history-text">Stopwatch session - 1h 10m</span>
+                                <span class="history-time">Yesterday, 10:00 AM</span>
+                            </div>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-icon">💬</span>
+                            <div class="history-content">
+                                <span class="history-text">Joined Global Chat</span>
+                                <span class="history-time">Jan 26, 3:45 PM</span>
                             </div>
                         </div>
                     </div>
@@ -154,57 +151,6 @@
     </div>
 
     <script>
-        // ===== Dashboard Data Loading =====
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadUserInfo();
-            await loadDashboardData();
-        });
-
-        async function loadUserInfo() {
-            const user = await getCurrentUser();
-            if (user) {
-                // Display username if available, otherwise fall back to email
-                document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
-            }
-        }
-
-        async function loadDashboardData() {
-            try {
-                const response = await authFetch('/api/dashboard');
-                if (!response || !response.ok) {
-                    console.error('Failed to load dashboard');
-                    return;
-                }
-
-                const data = await response.json();
-
-                // User Stats
-                document.getElementById('totalUsers').textContent = data.user_stats.total_users;
-                document.getElementById('activeUsers').textContent = data.user_stats.active_users + ' online';
-                document.getElementById('newUsers').textContent = data.user_stats.new_users_today;
-
-                // Global Metrics
-                document.getElementById('totalMessages').textContent = data.global_metrics.total_messages_sent;
-                document.getElementById('timerStarts').textContent = data.global_metrics.total_timer_starts;
-
-                // Activity
-                document.getElementById('totalSessions').textContent = data.activity_summary.total_sessions;
-                document.getElementById('avgSession').textContent =
-                    data.activity_summary.average_session_minutes.toFixed(1) + ' min';
-
-                // Timestamp
-                document.getElementById('lastUpdated').textContent =
-                    'Updated: ' + new Date(data.last_updated).toLocaleTimeString('en-IN', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Asia/Kolkata'
-                    });
-
-            } catch (error) {
-                console.error('Dashboard load error:', error);
-            }
-        }
-
         // ===== Stopwatch Logic =====
         const toggleBtn = document.getElementById('stopwatch-toggle');
         const stopwatchWindow = document.getElementById('stopwatch-window');
@@ -296,6 +242,12 @@
         });
 
         document.addEventListener('mouseup', () => isDragging = false);
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('access_token');
+            window.location.href = '/';
+        }
     </script>
 </body>
 

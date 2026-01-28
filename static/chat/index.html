@@ -4,90 +4,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - CodeChicks</title>
-    <link rel="stylesheet" href="/static/chat/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Global Chat | CodeChicks</title>
+    <meta name="description" content="CodeChicks Global Chat - Connect with the community">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/chat/style.css">
 </head>
 
 <body>
     <!-- Auth check - redirects if no token -->
     <script src="/static/js/auth.js"></script>
 
-    <div class="background-overlay"></div>
-
-    <!-- MOCKUP BANNER -->
-    <div class="mockup-banner">
-        ⚠️ MOCKUP UI - This is a temporary interface for testing endpoints. Design will change.
-    </div>
-
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="logo">
-                <h2>CodeChicks</h2>
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <aside class="chat-sidebar glass-panel">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="back-btn">← Back</a>
+                <h2 class="sidebar-title">Global Chat</h2>
             </div>
-            <ul class="nav-links">
-                <li><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
-                <li class="active"><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
-                <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
-            </ul>
-            <div class="nav-footer">
-                <button class="logout-btn" onclick="logout()">
+
+            <div class="sidebar-nav">
+                <ul class="nav-links">
+                    <li><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+                    <li class="active"><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
+                    <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
+                    <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+                </ul>
+            </div>
+
+            <div class="online-users">
+                <div class="section-header">
+                    <span class="section-title">Online Now</span>
+                    <span class="online-count" id="onlineCount">--</span>
+                </div>
+                <div class="users-list" id="usersList">
+                    <!-- Users will be populated here -->
+                    <div class="loading-users">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn glass-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
-        </nav>
+        </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="page-header">
-                <h1><i class="fas fa-comments"></i> Global Chat</h1>
-                <div class="chat-status">
-                    <span class="status-dot"></span>
-                    <span id="statusText">Connecting...</span>
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <!-- Chat Header -->
+            <header class="chat-header glass-panel">
+                <div class="chat-info">
+                    <h1 class="chat-title">Global Chat</h1>
+                    <span class="chat-subtitle" id="statusText">Connecting...</span>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn glass-btn" onclick="loadMessages()" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
             </header>
 
-            <!-- Chat Container -->
-            <div class="chat-container">
-                <!-- Messages Area -->
-                <div class="messages-area" id="messagesArea">
-                    <div class="loading-indicator" id="loadingMessages">
-                        <i class="fas fa-spinner fa-spin"></i> Loading messages...
-                    </div>
-                </div>
-
-                <!-- Message Input -->
-                <div class="message-input-container">
-                    <form id="messageForm" onsubmit="sendMessage(event)">
-                        <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off"
-                            required>
-                        <button type="submit" id="sendBtn">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
+            <!-- Messages Area -->
+            <div class="messages-area" id="messages-area">
+                <div class="loading-indicator" id="loadingMessages">
+                    <i class="fas fa-spinner fa-spin"></i> Loading messages...
                 </div>
             </div>
 
-            <footer class="page-footer">
-                <span id="messageCount">-- messages</span> •
-                <button class="refresh-btn" onclick="loadMessages()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </footer>
+            <!-- Message Input -->
+            <div class="message-input-area glass-panel">
+                <form id="messageForm" onsubmit="sendMessage(event)">
+                    <input type="text" class="message-input" id="message-input" placeholder="Type your message..."
+                        autocomplete="off" required>
+                    <button type="submit" class="send-btn" id="send-btn" title="Send">
+                        <span>➤</span>
+                    </button>
+                </form>
+            </div>
         </main>
     </div>
 
     <script>
         let currentUserEmail = null;
+        let currentUserName = null;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await getCurrentUser();
             if (user) {
                 currentUserEmail = user.email;
+                currentUserName = user.display_name || user.username || user.email.split('@')[0];
             }
             await loadMessages();
             await loadChatStatus();
@@ -103,7 +114,19 @@
                     const data = await response.json();
                     document.getElementById('statusText').textContent =
                         `${data.total_messages} messages`;
-                    document.querySelector('.status-dot').classList.add('connected');
+
+                    // Update online count (placeholder for now)
+                    document.getElementById('onlineCount').textContent = data.active_users || '--';
+
+                    // Populate users list placeholder
+                    const usersList = document.getElementById('usersList');
+                    usersList.innerHTML = `
+                        <div class="user-item online">
+                            <div class="user-avatar" style="background: #667eea;">${currentUserName ? currentUserName[0].toUpperCase() : 'U'}</div>
+                            <span class="user-name">${currentUserName || 'You'} (You)</span>
+                            <span class="status-dot"></span>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 document.getElementById('statusText').textContent = 'Offline';
@@ -116,7 +139,7 @@
                 if (!response || !response.ok) return;
 
                 const data = await response.json();
-                const area = document.getElementById('messagesArea');
+                const area = document.getElementById('messages-area');
                 const loading = document.getElementById('loadingMessages');
 
                 if (loading) loading.style.display = 'none';
@@ -129,21 +152,45 @@
                     return;
                 }
 
-                area.innerHTML = messages.map(msg => `
-                    <div class="message ${msg.sender_id === currentUserEmail ? 'own' : ''}">
-                        <div class="message-header">
-                            <span class="sender">${escapeHtml(msg.sender_name || msg.sender_id)}</span>
-                            <span class="time">${formatTime(msg.timestamp)}</span>
-                        </div>
-                        <div class="message-content">${escapeHtml(msg.content)}</div>
-                    </div>
-                `).join('');
+                area.innerHTML = messages.map(msg => {
+                    const isSelf = msg.sender_id === currentUserEmail;
+                    const displayName = msg.sender_name || msg.sender_id.split('@')[0];
+                    const avatarLetter = displayName[0].toUpperCase();
+                    const avatarColor = getAvatarColor(msg.sender_id);
+
+                    if (isSelf) {
+                        return `
+                            <div class="message self">
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="message-author">You</span>
+                                        <span class="message-time">${formatTime(msg.timestamp)}</span>
+                                    </div>
+                                    <p class="message-text">${escapeHtml(msg.content)}</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        return `
+                            <div class="message other">
+                                <div class="message-avatar" style="background: ${avatarColor};">${avatarLetter}</div>
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="message-author">${escapeHtml(displayName)}</span>
+                                        <span class="message-time">${formatTime(msg.timestamp)}</span>
+                                    </div>
+                                    <p class="message-text">${escapeHtml(msg.content)}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
 
                 // Scroll to bottom
                 area.scrollTop = area.scrollHeight;
 
-                // Update count
-                document.getElementById('messageCount').textContent =
+                // Update status
+                document.getElementById('statusText').textContent =
                     `${data.total_count} message${data.total_count !== 1 ? 's' : ''}`;
 
             } catch (error) {
@@ -154,8 +201,8 @@
         async function sendMessage(event) {
             event.preventDefault();
 
-            const input = document.getElementById('messageInput');
-            const btn = document.getElementById('sendBtn');
+            const input = document.getElementById('message-input');
+            const btn = document.getElementById('send-btn');
             const content = input.value.trim();
 
             if (!content) return;
@@ -221,6 +268,16 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function getAvatarColor(email) {
+            // Generate consistent color based on email
+            const colors = ['#667eea', '#f5576c', '#43e97b', '#4facfe', '#ffc107', '#ff6b6b', '#48dbfb', '#ff9ff3'];
+            let hash = 0;
+            for (let i = 0; i < email.length; i++) {
+                hash = email.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
         }
     </script>
 </body>
