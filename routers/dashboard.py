@@ -5,8 +5,8 @@ This module implements endpoints for the dashboard feature,
 returning aggregated statistics from MongoDB.
 """
 
-from fastapi import APIRouter, Depends, Query
-from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends
+from datetime import datetime, timedelta, timezone
 
 from schemas.dashboard import (
     DashboardResponse,
@@ -27,7 +27,7 @@ async def get_user_stats() -> UserStats:
     total_users = await UserDocument.count()
     
     # Count users created in the last 24 hours
-    yesterday = datetime.utcnow() - timedelta(days=1)
+    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     new_users_today = await UserDocument.find(
         UserDocument.created_at >= yesterday
     ).count()
@@ -70,9 +70,7 @@ async def get_global_metrics() -> GlobalMetrics:
 # --- Endpoints ---
 @router.get("", response_model=DashboardResponse)
 async def get_dashboard(
-    current_user: User = Depends(get_current_user),
-    page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="Items per page")
+    current_user: User = Depends(get_current_user)
 ):
     """
     Retrieve dashboard data for the authenticated user.
@@ -88,7 +86,7 @@ async def get_dashboard(
         user_stats=await get_user_stats(),
         activity_summary=await get_activity_summary(),
         global_metrics=await get_global_metrics(),
-        last_updated=datetime.utcnow()
+        last_updated=datetime.now(timezone.utc)
     )
 
 

@@ -4,10 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - CodeChicks</title>
-    <link rel="stylesheet" href="/static/settings/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Settings | CodeChicks</title>
+    <meta name="description" content="Manage your CodeChicks account settings">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/settings/style.css">
 </head>
 
 <body>
@@ -16,105 +19,192 @@
 
     <div class="background-overlay"></div>
 
-    <!-- MOCKUP BANNER -->
-    <div class="mockup-banner">
-        ⚠️ MOCKUP UI - This is a temporary interface for testing. Design will change.
-    </div>
-
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="logo">
-                <h2>CodeChicks</h2>
+    <div class="settings-container">
+        <!-- Header -->
+        <header class="settings-header glass-panel">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">🐣</span>
+                    <span class="logo-text">CodeChicks</span>
+                </div>
             </div>
+            <div class="header-center">
+                <h1 class="page-title">⚙️ Settings</h1>
+            </div>
+            <div class="header-right">
+                <span class="role-badge" id="roleBadge">USER</span>
+                <button class="logout-btn glass-btn" onclick="confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar glass-panel">
             <ul class="nav-links">
                 <li><a href="/dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
                 <li><a href="/chat"><i class="fas fa-comments"></i> Chat</a></li>
                 <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
                 <li class="active"><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
             </ul>
-            <div class="nav-footer">
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
+            <div class="admin-link" id="adminLink" style="display: none;">
+                <a href="/admin" class="admin-btn">
+                    <i class="fas fa-crown"></i> Admin Panel
+                </a>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <header class="page-header">
-                <h1><i class="fas fa-cog"></i> Settings</h1>
-            </header>
-
+        <main class="settings-main">
             <!-- Profile Section -->
-            <section class="settings-section">
-                <h2><i class="fas fa-user-circle"></i> Profile</h2>
-
-                <div class="profile-card" id="profileCard">
-                    <div class="profile-loading">
+            <section class="settings-card glass-panel">
+                <div class="card-header">
+                    <h2 class="card-title">👤 Profile</h2>
+                    <span class="card-subtitle" id="profileStatus">Loading...</span>
+                </div>
+                <div class="card-body">
+                    <div class="profile-loading" id="profileLoading">
                         <i class="fas fa-spinner fa-spin"></i> Loading profile...
                     </div>
+
+                    <form id="profileForm" style="display: none;" onsubmit="updateProfile(event)">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" disabled>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" minlength="3" maxlength="30"
+                                    placeholder="Choose a username">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="displayName">Display Name</label>
+                                <input type="text" id="displayName" maxlength="50" placeholder="How others see you">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="age">Age</label>
+                                <input type="number" id="age" min="13" max="120" placeholder="Your age">
+                            </div>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="bio">Bio</label>
+                            <textarea id="bio" maxlength="500" rows="3"
+                                placeholder="Tell us about yourself..."></textarea>
+                        </div>
+
+                        <div id="updateMessage" class="update-message"></div>
+
+                        <button type="submit" class="btn-primary" id="updateBtn">
+                            <span id="btnText"><i class="fas fa-save"></i> Save Changes</span>
+                            <div class="spinner" id="btnSpinner" style="display: none;"></div>
+                        </button>
+                    </form>
                 </div>
+            </section>
 
-                <form id="profileForm" style="display: none;" onsubmit="updateProfile(event)">
-                    <div class="form-grid">
+            <!-- Password Change Section -->
+            <section class="settings-card glass-panel">
+                <div class="card-header">
+                    <h2 class="card-title">🔑 Change Password</h2>
+                </div>
+                <div class="card-body">
+                    <form id="passwordForm" onsubmit="changePassword(event)">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="currentPassword">Current Password</label>
+                                <input type="password" id="currentPassword" required
+                                    placeholder="Enter current password">
+                            </div>
+                            <div class="input-group">
+                                <label for="newPassword">New Password</label>
+                                <input type="password" id="newPassword" minlength="8" required
+                                    placeholder="Min 8 characters">
+                            </div>
+                        </div>
                         <div class="input-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" disabled>
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" minlength="8" required
+                                placeholder="Confirm new password">
                         </div>
 
-                        <div class="input-group">
-                            <label for="username">Username</label>
-                            <input type="text" id="username" minlength="3" maxlength="30">
-                        </div>
+                        <div id="passwordMessage" class="update-message"></div>
 
-                        <div class="input-group">
-                            <label for="displayName">Display Name</label>
-                            <input type="text" id="displayName" maxlength="50">
-                        </div>
+                        <button type="submit" class="btn-secondary" id="passwordBtn">
+                            <span id="passwordBtnText"><i class="fas fa-key"></i> Change Password</span>
+                            <div class="spinner" id="passwordSpinner" style="display: none;"></div>
+                        </button>
+                    </form>
+                </div>
+            </section>
 
-                        <div class="input-group">
-                            <label for="age">Age</label>
-                            <input type="number" id="age" min="13" max="120">
-                        </div>
+            <!-- Admin Access Section -->
+            <section class="settings-card glass-panel" id="adminSection">
+                <div class="card-header">
+                    <h2 class="card-title">👑 Admin Access</h2>
+                </div>
+                <div class="card-body">
+                    <div id="adminUpgradeSection">
+                        <p class="section-desc">Enter the admin key to upgrade to admin role:</p>
+                        <form id="adminKeyForm" onsubmit="upgradeToAdmin(event)">
+                            <div class="input-group">
+                                <label for="adminKey">Admin Key</label>
+                                <input type="password" id="adminKey" required placeholder="Enter admin key">
+                            </div>
+                            <div id="adminMessage" class="update-message"></div>
+                            <button type="submit" class="btn-admin" id="adminBtn">
+                                <span id="adminBtnText"><i class="fas fa-crown"></i> Upgrade to Admin</span>
+                                <div class="spinner" id="adminSpinner" style="display: none;"></div>
+                            </button>
+                        </form>
                     </div>
-
-                    <div class="input-group full-width">
-                        <label for="bio">Bio</label>
-                        <textarea id="bio" maxlength="500" rows="3"></textarea>
+                    <div id="adminDowngradeSection" style="display: none;">
+                        <p class="section-desc">You are currently an admin. You can downgrade to regular user:</p>
+                        <button class="btn-danger" onclick="downgradeToUser()">
+                            <i class="fas fa-user"></i> Downgrade to User
+                        </button>
                     </div>
-
-                    <div id="updateMessage" class="update-message"></div>
-
-                    <button type="submit" class="btn-primary" id="updateBtn">
-                        <span id="btnText"><i class="fas fa-save"></i> Save Changes</span>
-                        <div class="spinner" id="btnSpinner" style="display: none;"></div>
-                    </button>
-                </form>
+                </div>
             </section>
 
             <!-- Account Section -->
-            <section class="settings-section">
-                <h2><i class="fas fa-shield-alt"></i> Account</h2>
-
-                <div class="settings-actions">
-                    <button class="btn-secondary" onclick="alert('Coming soon!')">
-                        <i class="fas fa-key"></i> Change Password
-                    </button>
-
-                    <button class="btn-danger" onclick="confirmLogout()">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
+            <section class="settings-card glass-panel">
+                <div class="card-header">
+                    <h2 class="card-title">🔐 Account</h2>
+                </div>
+                <div class="card-body">
+                    <div class="settings-actions">
+                        <button class="btn-danger" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
                 </div>
             </section>
 
-            <!-- App Info -->
-            <section class="settings-section">
-                <h2><i class="fas fa-info-circle"></i> About</h2>
-                <div class="app-info">
-                    <p><strong>CodeChicks</strong> v1.0.0</p>
-                    <p>Timezone: IST (UTC+5:30)</p>
-                    <p id="memberSince">Member since: Loading...</p>
+            <!-- About Section -->
+            <section class="settings-card glass-panel">
+                <div class="card-header">
+                    <h2 class="card-title">ℹ️ About</h2>
+                </div>
+                <div class="card-body">
+                    <div class="app-info">
+                        <div class="info-row">
+                            <span class="info-label">App</span>
+                            <span class="info-value">CodeChicks v1.0.0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Timezone</span>
+                            <span class="info-value">IST (UTC+5:30)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Member Since</span>
+                            <span class="info-value" id="memberSince">--</span>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -122,25 +212,57 @@
 
     <script>
         let currentProfile = null;
+        let currentRole = 'user';
 
         document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserRole();
             await loadProfile();
         });
+
+        async function loadUserRole() {
+            try {
+                const response = await authFetch('/auth/me');
+                if (!response || !response.ok) return;
+
+                const user = await response.json();
+                currentRole = user.role;
+
+                // Update UI based on role
+                const badge = document.getElementById('roleBadge');
+                if (user.role === 'admin') {
+                    badge.textContent = 'ADMIN';
+                    badge.classList.add('admin');
+                    document.getElementById('adminLink').style.display = 'block';
+                    document.getElementById('adminUpgradeSection').style.display = 'none';
+                    document.getElementById('adminDowngradeSection').style.display = 'block';
+                } else {
+                    badge.textContent = 'USER';
+                    badge.classList.remove('admin');
+                    document.getElementById('adminLink').style.display = 'none';
+                    document.getElementById('adminUpgradeSection').style.display = 'block';
+                    document.getElementById('adminDowngradeSection').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Role check failed:', error);
+            }
+        }
 
         async function loadProfile() {
             try {
                 const response = await authFetch('/api/profile');
                 if (!response || !response.ok) {
-                    document.getElementById('profileCard').innerHTML =
-                        '<div class="error">Failed to load profile</div>';
+                    document.getElementById('profileLoading').innerHTML =
+                        '<div class="error"><i class="fas fa-exclamation-triangle"></i> Failed to load profile</div>';
+                    document.getElementById('profileStatus').textContent = 'Error';
                     return;
                 }
 
                 currentProfile = await response.json();
 
                 // Hide loading, show form
-                document.getElementById('profileCard').style.display = 'none';
+                document.getElementById('profileLoading').style.display = 'none';
                 document.getElementById('profileForm').style.display = 'block';
+                document.getElementById('profileStatus').textContent = currentProfile.profile_complete ? 'Complete' : 'Incomplete';
 
                 // Populate form
                 document.getElementById('email').value = currentProfile.email;
@@ -152,15 +274,17 @@
                 // Member since
                 if (currentProfile.created_at) {
                     const date = new Date(currentProfile.created_at);
-                    document.getElementById('memberSince').textContent =
-                        'Member since: ' + date.toLocaleDateString('en-IN', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        });
+                    document.getElementById('memberSince').textContent = date.toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        timeZone: 'Asia/Kolkata'
+                    });
                 }
             } catch (error) {
                 console.error('Profile load error:', error);
+                document.getElementById('profileLoading').innerHTML =
+                    '<div class="error"><i class="fas fa-exclamation-triangle"></i> Network error</div>';
             }
         }
 
@@ -199,6 +323,7 @@
                     message.textContent = '✓ Profile updated successfully!';
                     message.className = 'update-message success';
                     currentProfile = data;
+                    document.getElementById('profileStatus').textContent = data.profile_complete ? 'Complete' : 'Incomplete';
                 } else {
                     message.textContent = data.detail || 'Failed to update profile.';
                     message.className = 'update-message error';
@@ -210,6 +335,127 @@
                 btn.disabled = false;
                 btnText.style.display = 'flex';
                 spinner.style.display = 'none';
+            }
+        }
+
+        async function changePassword(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const message = document.getElementById('passwordMessage');
+            const btn = document.getElementById('passwordBtn');
+            const btnText = document.getElementById('passwordBtnText');
+            const spinner = document.getElementById('passwordSpinner');
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                message.textContent = 'New passwords do not match';
+                message.className = 'update-message error';
+                return;
+            }
+
+            message.textContent = '';
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                const response = await authFetch('/api/profile/password', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.textContent = '✓ Password changed successfully!';
+                    message.className = 'update-message success';
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    message.textContent = data.detail || 'Failed to change password.';
+                    message.className = 'update-message error';
+                }
+            } catch (error) {
+                message.textContent = 'Network error. Please try again.';
+                message.className = 'update-message error';
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = 'flex';
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function upgradeToAdmin(event) {
+            event.preventDefault();
+
+            const adminKey = document.getElementById('adminKey').value;
+            const message = document.getElementById('adminMessage');
+            const btn = document.getElementById('adminBtn');
+            const btnText = document.getElementById('adminBtnText');
+            const spinner = document.getElementById('adminSpinner');
+
+            message.textContent = '';
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+
+            try {
+                const response = await authFetch('/auth/upgrade-to-admin', {
+                    method: 'POST',
+                    body: JSON.stringify({ admin_key: adminKey })
+                });
+
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    message.textContent = '✓ ' + data.message;
+                    message.className = 'update-message success';
+                    document.getElementById('adminKeyForm').reset();
+                    // Reload to update UI
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    message.textContent = data.detail || 'Invalid admin key';
+                    message.className = 'update-message error';
+                }
+            } catch (error) {
+                message.textContent = 'Network error. Please try again.';
+                message.className = 'update-message error';
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = 'flex';
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function downgradeToUser() {
+            if (!confirm('Are you sure you want to downgrade to regular user?')) return;
+
+            try {
+                const response = await authFetch('/auth/downgrade-to-user', {
+                    method: 'POST'
+                });
+
+                if (!response) return;
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert(data.detail || 'Failed to downgrade');
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
             }
         }
 

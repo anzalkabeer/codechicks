@@ -6,6 +6,7 @@ class User(BaseModel):
     disabled: Optional[bool] = None
     username: Optional[str] = None
     display_name: Optional[str] = None
+    role: str = "user"  # user or admin
 
 class UserInDB(User):
     hashed_password: str
@@ -24,3 +25,12 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class PasswordChange(BaseModel):
+    """Schema for password change request."""
+    current_password: str
+    new_password: str
+
+class AdminKeyRequest(BaseModel):
+    """Schema for admin key verification."""
+    admin_key: str

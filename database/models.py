@@ -9,7 +9,14 @@ from beanie import Document, Indexed
 from pydantic import Field
 from datetime import datetime
 from typing import Optional
+from enum import Enum
 from utils.timezone import now_ist
+
+
+class UserRole(str, Enum):
+    """User role enum for RBAC."""
+    USER = "user"
+    ADMIN = "admin"
 
 
 class UserDocument(Document):
@@ -23,8 +30,11 @@ class UserDocument(Document):
     hashed_password: str
     disabled: bool = False
     
-    # Profile fields
-    username: Optional[Indexed(str, unique=True)] = None
+    # Role-based access control
+    role: UserRole = UserRole.USER
+    
+    # Profile fields - sparse index allows multiple None values
+    username: Optional[Indexed(str, unique=True, sparse=True)] = None
     display_name: Optional[str] = None
     age: Optional[int] = None
     bio: Optional[str] = None
@@ -46,6 +56,7 @@ class UserDocument(Document):
                 "email": "user@example.com",
                 "hashed_password": "$pbkdf2-sha256$...",
                 "disabled": False,
+                "role": "user",
                 "username": "cooluser",
                 "display_name": "Cool User",
                 "profile_complete": True

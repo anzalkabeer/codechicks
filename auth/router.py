@@ -7,10 +7,10 @@ Handles user registration, login, and token validation using MongoDB via Beanie.
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from auth.schemas import User, UserRegister, UserLogin, Token, TokenData, UserInDB
-from auth.utils import verify_password, get_password_hash, create_access_token, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from auth.schemas import User, UserRegister, UserLogin, Token, TokenData, AdminKeyRequest
+from auth.utils import verify_password, get_password_hash, create_access_token, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, ADMIN_KEY
 from datetime import timedelta
-from database.models import UserDocument
+from database.models import UserDocument, UserRole
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -46,13 +46,32 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     if user is None:
         raise credentials_exception
     
+    # Check if user is disabled
+    if user.disabled:
+        raise credentials_exception
+    
     # Convert to User schema for response
     return User(
         email=user.email,
         disabled=user.disabled,
         username=user.username,
-        display_name=user.display_name
+        display_name=user.display_name,
+        role=user.role.value  # Convert enum to string
     )
+
+
+async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency that ensures the current user is an admin.
+    
+    Raises HTTPException 403 if user is not an admin.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
 
 
 @router.post("/register", response_model=Token)
@@ -69,10 +88,17 @@ async def register(user: UserRegister):
     
     # Hash password and create user document
     hashed_password = get_password_hash(user.password)
+    
+    # Generate default username from email prefix
+    email_prefix = user.email.split('@')[0]
+    
     new_user = UserDocument(
         email=user.email,
         hashed_password=hashed_password,
-        disabled=False
+        disabled=False,
+        role=UserRole.USER,
+        username=email_prefix,  # Default username from email
+        display_name=email_prefix.title()  # Default display name
     )
     await new_user.insert()
     
@@ -108,3 +134,52 @@ async def login(user: UserLogin):
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """Get current authenticated user info."""
     return current_user
+
+
+@router.post("/upgrade-to-admin")
+async def upgrade_to_admin(
+    request: AdminKeyRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upgrade current user to admin role by verifying admin key.
+    
+    The admin key is stored in the .env file.
+    """
+    # Verify admin key
+    if request.admin_key != ADMIN_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid admin key"
+        )
+    
+    # Get user document and update role
+    user_doc = await get_user_from_db(current_user.email)
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user_doc.role == UserRole.ADMIN:
+        return {"message": "You are already an admin", "role": "admin"}
+    
+    user_doc.role = UserRole.ADMIN
+    await user_doc.save()
+    
+    return {"message": "Successfully upgraded to admin", "role": "admin"}
+
+
+@router.post("/downgrade-to-user")
+async def downgrade_to_user(current_user: User = Depends(get_current_user)):
+    """
+    Downgrade current admin to regular user role.
+    """
+    user_doc = await get_user_from_db(current_user.email)
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user_doc.role == UserRole.USER:
+        return {"message": "You are already a regular user", "role": "user"}
+    
+    user_doc.role = UserRole.USER
+    await user_doc.save()
+    
+    return {"message": "Successfully downgraded to user", "role": "user"}

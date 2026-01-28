@@ -1,6 +1,6 @@
 /*
  * Onboarding Styles - CodeChicks
- * ⚠️ MOCKUP: Temporary styling for testing
+ * Matches login/register page styling
  */
 
 :root {
@@ -11,7 +11,7 @@
     --text-muted: #94a3b8;
     --glass-bg: rgba(15, 23, 42, 0.6);
     --glass-border: rgba(255, 255, 255, 0.1);
-    --card-bg: rgba(30, 41, 59, 0.5);
+    --input-bg: rgba(255, 255, 255, 0.05);
     --success-color: #22c55e;
     --error-color: #ef4444;
 }
@@ -24,62 +24,69 @@
 
 body {
     font-family: 'Outfit', sans-serif;
-    min-height: 100vh;
-    background-color: #000;
-    color: var(--text-white);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: #000;
+    color: var(--text-white);
 }
 
+/* Background Image with Overlay - matches login */
 body::before {
     content: '';
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    background: url('/static/img/bg.png') no-repeat center center/cover;
     z-index: -2;
 }
 
+/* Dark Overlay */
 .background-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
     z-index: -1;
-}
-
-/* Mockup Banner */
-.mockup-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-    color: #000;
-    text-align: center;
-    padding: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    z-index: 1000;
+    backdrop-filter: blur(5px);
 }
 
 .onboarding-container {
     width: 100%;
     max-width: 480px;
-    padding: 60px 20px 20px;
+    padding: 20px;
 }
 
+/* Glass Card - matches login */
 .glass-card {
-    background: var(--card-bg);
+    background: rgba(30, 41, 59, 0.4);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     padding: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle glow effect inside card */
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+    pointer-events: none;
 }
 
 .header-section {
@@ -137,7 +144,7 @@ body::before {
 .input-group label {
     display: block;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-bottom: 8px;
     font-weight: 500;
 }
@@ -154,8 +161,8 @@ body::before {
 .input-group input,
 .input-group textarea {
     width: 100%;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 12px 16px;
+    background: var(--input-bg);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
     color: var(--text-white);
@@ -179,7 +186,7 @@ body::before {
 
 .input-group input::placeholder,
 .input-group textarea::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.2);
 }
 
 .helper-text {
@@ -199,7 +206,8 @@ body::before {
 
 .btn-primary {
     width: 100%;
-    padding: 16px;
+    padding: 14px;
+    background: #0f3d6e;
     background: linear-gradient(135deg, #1e40af, #172554);
     color: white;
     border: none;
@@ -218,6 +226,11 @@ body::before {
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(30, 64, 175, 0.4);
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 .btn-primary:disabled {
@@ -233,6 +246,7 @@ body::before {
     border-radius: 50%;
     border-top-color: #fff;
     animation: spin 1s ease-in-out infinite;
+    margin: 0 auto;
 }
 
 @keyframes spin {
@@ -245,12 +259,13 @@ body::before {
     text-align: center;
     margin-top: 20px;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .skip-link a {
-    color: var(--accent-color);
+    color: var(--text-white);
     text-decoration: none;
+    font-weight: 600;
 }
 
 .skip-link a:hover {
@@ -260,7 +275,11 @@ body::before {
 /* Responsive */
 @media (max-width: 480px) {
     .glass-card {
-        padding: 24px;
-        border-radius: 16px;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        border: none;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 30px;
     }
 }

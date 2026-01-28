@@ -6,6 +6,7 @@ This document tracks known issues, bugs, and technical debt that need to be addr
 
 ### 1. Server Shutdown Traceback
 **Severity:** Low (Development only)
+**Status:** ⏳ Open
 **Description:** 
 When stopping the development server (`fastapi dev`) via Ctrl+C, an exception traceback occasionally occurs during the shutdown process.
 **Context:**
@@ -13,49 +14,38 @@ When stopping the development server (`fastapi dev`) via Ctrl+C, an exception tr
 - Observed in `clock_.py` / `database/connection.py` lifespan handling.
 **Action:** Investigate graceful shutdown patterns for Beanie + FastAPI.
 
-### 2. User Profile TOCTOU Vulnerability
-**Severity:** High
-**Description:**
-The username uniqueness check in `routers/profile.py` (lines 71-86) is vulnerable to a Time-of-Check-Time-of-Use race condition.
-**Action:**
-- Add a unique index on `UserDocument.username` via `UserDocument.Settings`.
-- Wrap `await user.save()` in a try/except block catching duplicate key errors to raise a 400 `HTTPException`.
+### 2. ~~User Profile TOCTOU Vulnerability~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Changed username index to `sparse=True` to allow multiple None values
+- Added try/except around `user.save()` to catch duplicate key errors
 
-### 3. Missing Disabled User Check
-**Severity:** Medium
-**Description:**
-`auth/router.py` (lines 45-55) fetches users but does not check if they are disabled before returning.
-**Action:**
-- Add a check for `user.disabled` after fetching.
-- Raise `credentials_exception` if true.
+### 3. ~~Missing Disabled User Check~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Added `if user.disabled: raise credentials_exception` check in `get_current_user`
 
-### 4. Registration Missing Profile Fields
-**Severity:** Medium
-**Description:**
-`auth/router.py` (lines 72-77) creates users without `username` or `display_name`, which `get_current_user` expects.
-**Action:**
-- Populate `username`/`display_name` from the incoming payload or set safe defaults during registration.
+### 4. ~~Registration Missing Profile Fields~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Registration now sets `username` from email prefix and `display_name` from capitalized prefix
 
-### 5. Insecure "Host" Binding
-**Severity:** High
-**Description:**
-`.env.example` (line 20) binds `HOST` to `0.0.0.0` by default.
-**Action:**
-- Update comments to warn that `0.0.0.0` exposes the server to all interfaces.
-- Suggest `127.0.0.1` for local/production unless external access is required and secured.
+### 5. ~~Insecure "Host" Binding~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Updated `.env.example` with security warnings
+- Changed default `HOST` to `127.0.0.1`
 
-### 6. Insecure "Debug" Mode
-**Severity:** High
-**Description:**
-`.env.example` (line 22) lacks warnings about `DEBUG=true` in production.
-**Action:**
-- Add warning that `DEBUG=true` exposes sensitive info.
-- Recommend `DEBUG=false` as default.
+### 6. ~~Insecure "Debug" Mode~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Added warning in `.env.example` about `DEBUG=true` exposing sensitive info
 
 ## 🛠️ Technical Debt & TODOs
 
 ### 1. WebSocket Integration for Chat
 **Severity:** High (Feature Gap)
+**Status:** ⏳ Open
 **Description:** 
 The chat system currently uses polling (HTTP requests every 5s) instead of real-time updates.
 **Locations:** 
@@ -63,69 +53,57 @@ The chat system currently uses polling (HTTP requests every 5s) instead of real-
 - `static/chat/index.html`: Remove polling logic.
 **Action:** Implement FastAPI WebSockets and `ConnectionManager`.
 
-### 2. CORS Security
-**Severity:** High
-**Description:**
-`clock_.py` (lines 41-54) allows credentials with wildcard origins (`*`) if configured, which is unsafe.
-**Action:**
-- Set `allow_credentials=False` if `cors_origins` is `*`.
-- Only allow credentials with explicit origin whitelists.
+### 2. ~~CORS Security~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- `allow_credentials` set to `False` when using wildcard (`*`) origins
 
-### 3. Secret Key Security
-**Severity:** High
-**Description:**
-`auth/utils.py` (line 11) uses a default insecure `SECRET_KEY`.
-**Action:**
-- Raise `ValueError` in production if `SECRET_KEY` is not set.
-- Only allow fallback key in non-production environments.
+### 3. ~~Secret Key Security~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Added production check: raises `ValueError` if default `SECRET_KEY` used with `DEBUG=false`
 
-### 4. Database Connection Cleanup
-**Severity:** Medium
-**Description:**
-`database/connection.py` (lines 43-52) does not set `_client` to `None` after closing.
-**Action:**
-- Set `global _client = None` after closing to prevent reuse of closed connections.
+### 4. ~~Database Connection Cleanup~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- `_client` set to `None` after closing in `close_db()`
 
-### 5. MongoDB Models
-**Severity:** Medium
-**Description:**
-`database/models.py` (line 27) uses `unique=True` on an optional `username` field, preventing multiple users with `None` username.
-**Action:**
-- Remove `unique=True` from the field definition.
-- Create a partial unique index for `username` where it exists and is a string.
+### 5. ~~MongoDB Models~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Changed `username` field to use `sparse=True` index
 
-### 6. Dashboard & Chat API Cleanup
-**Severity:** Low
-**Description:**
-- `routers/dashboard.py`: Uses deprecated `datetime.utcnow()`.
-- `routers/dashboard.py`: Defines unused `page`/`page_size` parameters.
-**Action:**
-- Switch to `datetime.now(timezone.utc)`.
-- Remove unused parameters.
+### 6. ~~Dashboard & Chat API Cleanup~~ ✅ FIXED (Partial)
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- Replaced `datetime.utcnow()` with `datetime.now(timezone.utc)`
+- Removed unused `page`/`page_size` parameters from dashboard endpoint
 
-### 7. Token Expiry Configuration
-**Severity:** Low
-**Description:**
-`auth/utils.py`: `create_access_token` ignores `ACCESS_TOKEN_EXPIRE_MINUTES` env var default.
-**Action:**
-- Use `ACCESS_TOKEN_EXPIRE_MINUTES` as default when `expires_delta` is `None`.
+### 7. ~~Token Expiry Configuration~~ ✅ FIXED
+**Status:** ✅ Fixed (2026-01-29)
+**Resolution:**
+- `create_access_token` now uses `ACCESS_TOKEN_EXPIRE_MINUTES` from env when `expires_delta` is None
 
 ### 8. Frontend Polish & Reliability
 
 #### Dashboard (`static/dashboard/index.html`)
+**Status:** ⏳ Open
 - **Action:** Add SRI hashes and `crossorigin` to external CDN links (Fonts/Icons).
 - **Action:** Handle `getCurrentUser` failures gracefully (don't stick on "Loading...").
 - **Action:** Add defensive checks (optional chaining) for nested data fields (`user_stats`, etc.) to prevent crashes.
 
 #### Chat (`static/chat/index.html`)
+**Status:** ⏳ Open
 - **Action:** Update status dot classes correctly in catch block (remove `connected`).
 
 #### Settings (`static/settings/index.html` & `.css`)
+**Status:** ⏳ Open
 - **Action:** Handle profile load errors by hiding spinner and showing error message.
 - **Action:** Ensure UI cleanup (spinner/button) in `finally` block for `authFetch`.
 - **Action:** Add `@import` for Outfit font and improved fallback font stack.
 
 #### Styling & UX
+**Status:** ⏳ Open
 - **Action:** Add keyboard focus styles to nav links (`static/dashboard/style.css`).
 - **Action:** Use WebKit prefix for backdrop-filter in `.glass-card` (`static/onboarding/style.css`).
 - **Action:** Increase placeholder text contrast (`static/onboarding/style.css`).
@@ -134,6 +112,7 @@ The chat system currently uses polling (HTTP requests every 5s) instead of real-
 ## 📚 Documentation Updates
 
 ### DEVLOG.md
+**Status:** ⏳ Open
 - **Action:** Update environment variable table (Mark `MONGODB_URI` required, add `DATABASE_NAME`).
 - **Action:** Clarify "Redis + Netlify" stack description.
 - **Action:** Update "Frontend Pages" roadmap status (mark as mockups completed).

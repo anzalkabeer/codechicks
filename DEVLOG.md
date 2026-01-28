@@ -18,6 +18,63 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ## Changelog
 
+### [2026-01-29] - RBAC Implementation & UI Enhancements
+
+**Contributor:** Keshav
+
+#### ✅ Completed
+
+**Role-Based Access Control (RBAC):**
+- Added `UserRole` enum (`user`, `admin`) to `database/models.py`
+- Added `role` field to User schema and UserDocument
+- Implemented `get_current_admin` dependency for admin-only endpoints
+- Created admin router with stats, user management, and moderation endpoints
+- Added `ADMIN_KEY` environment variable for secure admin upgrades
+- Created `/auth/upgrade-to-admin` and `/auth/downgrade-to-user` endpoints
+
+**Admin Panel:**
+- New admin panel at `/admin` with gold/amber accent theme
+- Admin stats dashboard (total users, active users, messages, admin count)
+- Quick actions for user management and chat moderation
+- System status display with server time
+
+**Password Change Feature:**
+- Added `POST /api/profile/password` endpoint
+- Validates current password before allowing change
+- Enforces minimum 8 character requirement
+- Added password change form to Settings page
+
+**Unified UI Design:**
+- Applied `bg.png` background image to dashboard, chat, settings, clock pages
+- Added role badges (USER/ADMIN) in page headers
+- Added "Admin Panel" link in sidebar for admin users
+- Dashboard hides admin-only stats ("Total Users") for regular users
+- Onboarding page matches login/register glassmorphism design
+- Clock page updated with sidebar navigation
+
+**Files Modified:**
+- `database/models.py` - Added UserRole enum and role field
+- `auth/schemas.py` - Added role, PasswordChange, AdminKeyRequest schemas
+- `auth/router.py` - Added role to user response, admin endpoints
+- `auth/utils.py` - Added ADMIN_KEY configuration
+- `routers/profile.py` - Added password change endpoint
+- `routers/admin.py` - New admin router (stats, user management)
+- `clock_.py` - Added admin router, /admin route
+- `.env` - Added ADMIN_KEY
+- `static/dashboard/index.html` - Role badge, admin link, admin-only stats
+- `static/dashboard/style.css` - Background image, admin styles
+- `static/chat/index.html` - Admin link in sidebar
+- `static/chat/style.css` - Background image, admin styles
+- `static/settings/index.html` - Password change, admin upgrade section
+- `static/settings/style.css` - Background image, admin styles
+- `static/clock/index.html` - Sidebar navigation, unified design
+- `static/onboarding/index.html` - Removed mockup banner
+- `static/onboarding/style.css` - Matches login design with bg.png
+- `static/admin/index.html` - New admin panel
+- `static/admin/style.css` - Gold/amber admin theme
+
+---
+
 ### [2026-01-28] - Glassmorphism UI Integration
 
 **Contributor:** Keshav
@@ -39,11 +96,19 @@ This document tracks all major changes, features, and future plans for the CodeC
 - Maintained IST timezone formatting for timestamps
 - Preserved all existing messaging functionality
 
+**New Settings UI:**
+- Replaced mockup UI with matching glassmorphism design
+- Profile editing form with validation
+- Account actions section
+- App info display with member since date
+
 **Files Modified:**
 - `static/dashboard/index.html` - New glassmorphism dashboard layout
 - `static/dashboard/style.css` - New dark theme styles
 - `static/chat/index.html` - New glassmorphism chat layout
 - `static/chat/style.css` - New dark theme styles
+- `static/settings/index.html` - New glassmorphism settings layout
+- `static/settings/style.css` - New dark theme styles
 
 ---
 

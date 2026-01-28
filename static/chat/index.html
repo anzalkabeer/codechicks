@@ -32,6 +32,11 @@
                     <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
                     <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
                 </ul>
+                <div class="admin-link" id="adminLink" style="display: none;">
+                    <a href="/admin" class="admin-btn">
+                        <i class="fas fa-crown"></i> Admin Panel
+                    </a>
+                </div>
             </div>
 
             <div class="online-users">
@@ -99,6 +104,11 @@
             if (user) {
                 currentUserEmail = user.email;
                 currentUserName = user.display_name || user.username || user.email.split('@')[0];
+
+                // Show admin link for admin users
+                if (user.role === 'admin') {
+                    document.getElementById('adminLink').style.display = 'block';
+                }
             }
             await loadMessages();
             await loadChatStatus();

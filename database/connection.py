@@ -63,6 +63,7 @@ async def close_db():
     global _client
     if _client:
         _client.close()
+        _client = None  # Prevent reuse of closed connection
         print("🔌 MongoDB connection closed")
 
 

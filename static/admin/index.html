@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | CodeChicks</title>
+    <meta name="description" content="CodeChicks Admin Panel - Manage users and system">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/admin/style.css">
+</head>
+
+<body>
+    <!-- Auth check -->
+    <script src="/static/js/auth.js"></script>
+
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header glass-panel">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">👑</span>
+                    <span class="logo-text">Admin Panel</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <span class="admin-badge">ADMIN</span>
+            </div>
+            <div class="header-right">
+                <a href="/dashboard" class="glass-btn">
+                    <i class="fas fa-arrow-left"></i> Back to App
+                </a>
+            </div>
+        </header>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar glass-panel">
+            <ul class="nav-links">
+                <li class="active"><a href="/admin"><i class="fas fa-tachometer-alt"></i> Overview</a></li>
+                <li><a href="/admin/users"><i class="fas fa-users"></i> Users</a></li>
+                <li><a href="/admin/messages"><i class="fas fa-comments"></i> Messages</a></li>
+                <li><a href="/admin/system"><i class="fas fa-server"></i> System</a></li>
+            </ul>
+            <div class="nav-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Stats Overview -->
+            <section class="stats-grid">
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="totalUsers">--</span>
+                        <span class="stat-label">Total Users</span>
+                    </div>
+                </div>
+
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon active">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="activeUsers">--</span>
+                        <span class="stat-label">Active Users</span>
+                    </div>
+                </div>
+
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon messages">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="totalMessages">--</span>
+                        <span class="stat-label">Total Messages</span>
+                    </div>
+                </div>
+
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon admins">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="adminCount">--</span>
+                        <span class="stat-label">Admins</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="quick-actions glass-panel">
+                <h2 class="section-title">⚡ Quick Actions</h2>
+                <div class="action-buttons">
+                    <a href="/admin/users" class="action-btn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Manage Users</span>
+                    </a>
+                    <a href="/admin/messages" class="action-btn">
+                        <i class="fas fa-broom"></i>
+                        <span>Moderate Chat</span>
+                    </a>
+                    <button class="action-btn" onclick="refreshStats()">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh Stats</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="recent-activity glass-panel">
+                <h2 class="section-title">📊 System Status</h2>
+                <div class="system-info">
+                    <div class="info-row">
+                        <span class="info-label">Database</span>
+                        <span class="info-value status-ok" id="dbStatus">
+                            <i class="fas fa-circle"></i> Connected
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Server Time</span>
+                        <span class="info-value" id="serverTime">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Version</span>
+                        <span class="info-value">v1.0.0</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Check admin access
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAdminAccess();
+            await loadAdminStats();
+            updateServerTime();
+            setInterval(updateServerTime, 1000);
+        });
+
+        async function checkAdminAccess() {
+            try {
+                const response = await authFetch('/auth/me');
+                if (!response || !response.ok) return;
+
+                const user = await response.json();
+                if (user.role !== 'admin') {
+                    // Not admin, redirect to dashboard
+                    alert('Admin access required');
+                    window.location.href = '/dashboard';
+                }
+            } catch (error) {
+                console.error('Admin check failed:', error);
+                window.location.href = '/dashboard';
+            }
+        }
+
+        async function loadAdminStats() {
+            try {
+                const response = await authFetch('/api/admin/stats');
+                if (!response || !response.ok) {
+                    console.error('Failed to load admin stats');
+                    return;
+                }
+
+                const stats = await response.json();
+                document.getElementById('totalUsers').textContent = stats.total_users || 0;
+                document.getElementById('activeUsers').textContent = stats.active_users || 0;
+                document.getElementById('totalMessages').textContent = stats.total_messages || 0;
+                document.getElementById('adminCount').textContent = stats.admin_count || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function refreshStats() {
+            const btn = event.target.closest('.action-btn');
+            const icon = btn.querySelector('i');
+            icon.classList.add('fa-spin');
+
+            await loadAdminStats();
+
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+            }, 500);
+        }
+
+        function updateServerTime() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('serverTime').textContent = now.toLocaleString('en-IN', options) + ' IST';
+        }
+    </script>
+</body>
+
+</html>

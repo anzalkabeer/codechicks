@@ -11,6 +11,7 @@ from auth.router import router as auth_router
 from routers.dashboard import router as dashboard_router
 from routers.chat import router as chat_router
 from routers.profile import router as profile_router
+from routers.admin import router as admin_router
 from database.connection import init_db, close_db
 
 from fastapi.staticfiles import StaticFiles
@@ -42,13 +43,16 @@ app = FastAPI(
 cors_origins = os.getenv("CORS_ORIGINS", "*")
 if cors_origins == "*":
     origins = ["*"]
+    # Credentials not allowed with wildcard origin for security
+    allow_credentials = False
 else:
     origins = [origin.strip() for origin in cors_origins.split(",")]
+    allow_credentials = True
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -58,6 +62,7 @@ app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(chat_router)
 app.include_router(profile_router)
+app.include_router(admin_router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -151,8 +156,14 @@ async def onboarding_page():
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page():
-    """Serve settings UI (mockup)"""
+    """Serve settings UI"""
     with open("static/settings/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page():
+    """Serve admin panel UI"""
+    with open("static/admin/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
 if __name__ == "__main__":

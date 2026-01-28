@@ -30,6 +30,7 @@
                 <h1 class="welcome-text">Welcome back, <span class="user-name" id="userName">User</span>!</h1>
             </div>
             <div class="header-right">
+                <span class="role-badge" id="roleBadge">USER</span>
                 <button class="logout-btn glass-btn" onclick="logout()">Logout</button>
             </div>
         </header>
@@ -42,6 +43,11 @@
                 <li><a href="/clock"><i class="fas fa-clock"></i> Timer</a></li>
                 <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
             </ul>
+            <div class="admin-link" id="adminLink" style="display: none;">
+                <a href="/admin" class="admin-btn">
+                    <i class="fas fa-crown"></i> Admin Panel
+                </a>
+            </div>
         </nav>
 
         <!-- Main Content -->
@@ -75,8 +81,8 @@
                     </div>
                 </div>
 
-                <!-- Users Card -->
-                <div class="stat-card glass-panel">
+                <!-- Users Card (Admin Only) -->
+                <div class="stat-card glass-panel admin-only" id="usersCard">
                     <div class="stat-icon">👥</div>
                     <div class="stat-info">
                         <span class="stat-value" id="totalUsers">--</span>
@@ -165,6 +171,22 @@
             if (user) {
                 // Display username if available, otherwise fall back to email
                 document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
+
+                // Update UI based on role
+                const badge = document.getElementById('roleBadge');
+                if (user.role === 'admin') {
+                    badge.textContent = 'ADMIN';
+                    badge.classList.add('admin');
+                    document.getElementById('adminLink').style.display = 'block';
+                    // Show admin-only stats
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                } else {
+                    badge.textContent = 'USER';
+                    badge.classList.remove('admin');
+                    document.getElementById('adminLink').style.display = 'none';
+                    // Hide admin-only stats
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                }
             }
         }
 
