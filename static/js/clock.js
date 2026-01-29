@@ -9,6 +9,7 @@ let isRunning = false;
 
 function formatTime(ms) {
     const totalSeconds = Math.floor(ms / 1000);
+    if (isNaN(totalSeconds) || totalSeconds < 0) return "00:00:00";
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
@@ -24,15 +25,39 @@ function updateDisplay() {
 
 const toggleBtn = document.getElementById('btn-toggle');
 
+// Auth Helper
+function getAuthHeaders() {
+    const token = localStorage.getItem('access_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 // Sync with server on load
 let displayIntervalId = null;
 
 async function syncTimerState() {
     try {
-        const response = await fetch('/api/status');
+        const headers = getAuthHeaders();
+        // If no token, we can't sync. Maybe redirect to login?
+        if (!headers.Authorization) {
+            console.warn("No auth token found, cannot sync timer.");
+            return;
+        }
+
+        const response = await fetch('/api/status', { headers });
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token expired or invalid
+                window.location.href = '/';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
-        elapsedTime = data.elapsed_time;
-        isRunning = data.is_running;
+
+        // Handle potential null/undefined values
+        elapsedTime = data.elapsed_time || 0;
+        isRunning = data.is_running || false;
 
         if (isRunning) {
             startTime = Date.now();
@@ -66,10 +91,12 @@ function updateButtonState() {
 }
 
 async function toggleTimer() {
+    const headers = getAuthHeaders();
     if (isRunning) {
         // Pause
         try {
-            const response = await fetch('/api/stop', { method: 'POST' });
+            const response = await fetch('/api/stop', { method: 'POST', headers });
+            if (!response.ok) throw new Error('Failed to stop');
             const data = await response.json();
 
             clearInterval(timerInterval);
@@ -82,7 +109,8 @@ async function toggleTimer() {
     } else {
         // Start
         try {
-            const response = await fetch('/api/start', { method: 'POST' });
+            const response = await fetch('/api/start', { method: 'POST', headers });
+            if (!response.ok) throw new Error('Failed to start');
             const data = await response.json();
 
             elapsedTime = data.elapsed_time;
@@ -101,7 +129,11 @@ async function toggleTimer() {
 
 async function resetTimer() {
     try {
-        const response = await fetch('/api/reset', { method: 'POST' });
+        const headers = getAuthHeaders();
+        const response = await fetch('/api/reset', { method: 'POST', headers });
+        if (!response.ok) throw new Error('Failed to reset');
+
+        // Even if response fails, we reset UI
         const data = await response.json();
 
         clearInterval(timerInterval);

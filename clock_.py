@@ -16,6 +16,7 @@ from routers.profile import router as profile_router
 from routers.admin import router as admin_router
 from globalchat.main import router as globalchat_router
 from database.connection import init_db, close_db
+from database.models import UserDocument
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse

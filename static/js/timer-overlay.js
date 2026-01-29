@@ -134,6 +134,10 @@ function initTimerLogic() {
     // --- UI Helpers ---
     function updateDisplay(ms) {
         const totalSeconds = Math.floor(ms / 1000);
+        if (isNaN(totalSeconds) || totalSeconds < 0) {
+            display.textContent = "00:00:00";
+            return;
+        }
         const h = Math.floor(totalSeconds / 3600);
         const m = Math.floor((totalSeconds % 3600) / 60);
         const s = totalSeconds % 60;
