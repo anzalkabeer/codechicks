@@ -225,86 +225,84 @@
         });
 
         // ============================================================
-        // WEBSOCKET CONNECTION LOGIC
+        // POLLING-BASED CHAT (Vercel doesn't support WebSockets)
         // ============================================================
 
+        let pollingInterval = null;
+        const POLL_INTERVAL_MS = 3000; // Poll every 3 seconds
+        let lastMessageId = null; // Track newest message to detect new ones
+
         function connectWebSocket() {
-            updateConnectionStatus('connecting');
+            // Vercel doesn't support WebSockets, use HTTP polling instead
+            console.log('🔄 Starting HTTP polling mode (WebSocket not supported on Vercel)');
+            updateConnectionStatus('polling');
 
-            // Determine WebSocket URL (ws:// for localhost, wss:// for production)
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            // Get token from localStorage
-            const token = localStorage.getItem('access_token');
-            if (!token) {
-                console.error("No auth token found");
-                updateConnectionStatus('disconnected');
-                return;
+            // Hide loading indicator
+            const loading = document.getElementById('loadingMessages');
+            if (loading) loading.style.display = 'none';
+
+            // Start polling for new messages
+            startPolling();
+        }
+
+        function startPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
             }
-            const wsUrl = `${protocol}//${window.location.host}/ws/chat?token=${encodeURIComponent(token)}`;
 
-            // Mask token in logs for security
-            const maskedUrl = wsUrl.replace(/token=([^&]+)/, 'token=***');
-            console.log('Connecting to WebSocket:', maskedUrl);
+            pollingInterval = setInterval(async () => {
+                await pollForNewMessages();
+            }, POLL_INTERVAL_MS);
 
+            // Also poll immediately
+            pollForNewMessages();
+        }
+
+        async function pollForNewMessages() {
             try {
-                websocket = new WebSocket(wsUrl);
+                const response = await authFetch('/api/chat/messages?page_size=20');
+                if (!response || !response.ok) return;
 
-                // 1. CONNECTION LOGIC - Handshake complete
-                websocket.onopen = () => {
-                    console.log('✅ WebSocket connected!');
-                    updateConnectionStatus('connected');
-                    reconnectAttempts = 0;
+                const data = await response.json();
+                const messages = data.messages;
 
-                    // Hide loading indicator
-                    const loading = document.getElementById('loadingMessages');
-                    if (loading) loading.style.display = 'none';
-                };
+                if (messages.length > 0) {
+                    const newestId = messages[0].id; // Messages are sorted newest first
 
-                // 3. LISTENING LOOP - Receive messages
-                websocket.onmessage = (event) => {
-                    console.log('📨 Received:', event.data);
-                    const data = JSON.parse(event.data);
-
-                    if (data.type === 'message' || data.type === 'system') {
-                        handleIncomingMessage(data);
-                    } else if (data.type === 'edit') {
-                        handleMessageEdit(data);
-                    } else if (data.type === 'delete') {
-                        handleMessageDelete(data);
+                    // If we have new messages since last poll
+                    if (lastMessageId && newestId !== lastMessageId) {
+                        // Find new messages (those we haven't seen)
+                        for (let i = messages.length - 1; i >= 0; i--) {
+                            const msg = messages[i];
+                            if (!document.getElementById(`msg-${msg.id}`)) {
+                                // This is a new message, add it
+                                handleIncomingMessage({
+                                    type: 'message',
+                                    id: msg.id,
+                                    username: msg.sender_name,
+                                    sender_id: msg.sender_id,
+                                    message: msg.content,
+                                    timestamp: msg.timestamp,
+                                    reply_to_id: msg.reply_to_id,
+                                    reply_to_username: msg.reply_to_username,
+                                    reply_to_content: msg.reply_to_content
+                                });
+                            }
+                        }
                     }
-                };
-
-                // 5. DISCONNECT LOGIC - Handle connection close
-                websocket.onclose = (event) => {
-                    console.log('🔌 WebSocket closed:', event.code, event.reason);
-                    updateConnectionStatus('disconnected');
-
-                    // Attempt to reconnect
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        reconnectAttempts++;
-                        const delay = reconnectDelay * reconnectAttempts;
-                        console.log(`Reconnecting in ${delay}ms... (attempt ${reconnectAttempts})`);
-                        setTimeout(connectWebSocket, delay);
-                    }
-                };
-
-                websocket.onerror = (error) => {
-                    console.error('❌ WebSocket error:', error);
-                    updateConnectionStatus('disconnected');
-                };
-
+                    lastMessageId = newestId;
+                }
             } catch (error) {
-                console.error('Failed to create WebSocket:', error);
-                updateConnectionStatus('disconnected');
+                console.error('Polling error:', error);
             }
         }
 
         function reconnectWebSocket() {
-            if (websocket) {
-                websocket.close();
+            // For polling mode, just restart polling
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
             }
-            reconnectAttempts = 0;
-            connectWebSocket();
+            startPolling();
         }
 
         function updateConnectionStatus(status) {
@@ -316,6 +314,10 @@
             switch (status) {
                 case 'connected':
                     text.textContent = 'Connected';
+                    break;
+                case 'polling':
+                    dot.className = 'connection-dot connected'; // Green dot
+                    text.textContent = 'Connected (Polling)';
                     break;
                 case 'disconnected':
                     text.textContent = 'Disconnected';
@@ -577,7 +579,7 @@
             }
         }
 
-        function saveEdit(id) {
+        async function saveEdit(id) {
             const input = document.getElementById(`edit-input-${id}`);
             if (!input) return;
 
@@ -588,17 +590,25 @@
                 return;
             }
 
-            if (websocket && websocket.readyState === WebSocket.OPEN) {
-                websocket.send(JSON.stringify({
-                    type: 'edit',
-                    id: id,
-                    message: newText,
-                    sender_id: currentUserEmail
-                }));
-            } else {
-                alert("Not connected to chat.");
+            try {
+                const response = await authFetch(`/api/chat/messages/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: newText })
+                });
+
+                if (response && response.ok) {
+                    // Update UI
+                    handleMessageEdit({ id: id, message: newText });
+                } else {
+                    alert('Failed to edit message.');
+                    cancelEdit(id);
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                alert('Failed to edit message.');
+                cancelEdit(id);
             }
-            // Wait for WebSocket echo to update UI
         }
 
 
@@ -615,17 +625,23 @@
             modal.classList.remove('active');
         }
 
-        function confirmDelete() {
+        async function confirmDelete() {
             if (!messageToDeleteId) return;
 
-            if (websocket && websocket.readyState === WebSocket.OPEN) {
-                websocket.send(JSON.stringify({
-                    type: 'delete',
-                    id: messageToDeleteId,
-                    sender_id: currentUserEmail
-                }));
-            } else {
-                alert("Not connected to chat.");
+            try {
+                const response = await authFetch(`/api/chat/messages/${messageToDeleteId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response && (response.ok || response.status === 204)) {
+                    // Update UI
+                    handleMessageDelete({ id: messageToDeleteId });
+                } else {
+                    alert('Failed to delete message.');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Failed to delete message.');
             }
 
             cancelDelete(); // Close modal
@@ -640,7 +656,7 @@
 
 
         // ============================================================
-        // SEND MESSAGE (4. BROADCASTING LOGIC - triggered server-side)
+        // SEND MESSAGE VIA HTTP POST (Polling mode)
         // ============================================================
 
         async function sendMessage(event) {
@@ -652,32 +668,38 @@
 
             if (!content) return;
 
-            // Check WebSocket connection
-            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
-                alert('Not connected to chat. Please wait or refresh.');
-                return;
-            }
-
             btn.disabled = true;
             input.disabled = true;
 
             try {
-                // Send message via WebSocket
-                const messageData = {
-                    type: 'message',
-                    username: currentUserName,
-                    sender_id: currentUserEmail,
-                    message: content
-                };
+                // Send message via HTTP POST
+                const response = await authFetch('/api/chat/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        room_id: 'global'
+                    })
+                });
 
-                // Add Reply Data if active
-                if (activeReplyData) {
-                    messageData.reply_to_id = activeReplyData.id;
-                    messageData.reply_to_username = activeReplyData.username;
-                    messageData.reply_to_content = activeReplyData.text;
+                if (!response || !response.ok) {
+                    throw new Error('Failed to send message');
                 }
 
-                websocket.send(JSON.stringify(messageData));
+                const newMsg = await response.json();
+
+                // Display the message immediately
+                handleIncomingMessage({
+                    type: 'message',
+                    id: newMsg.id,
+                    username: newMsg.sender_name,
+                    sender_id: newMsg.sender_id,
+                    message: newMsg.content,
+                    timestamp: newMsg.timestamp
+                });
+
                 input.value = '';
 
                 // Clear reply state
