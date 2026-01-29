@@ -9,7 +9,7 @@ Implements a real-time global chat room using WebSockets with the following logi
 5. Disconnect Logic - Cleanup on connection close
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from typing import List, Dict, Any
 import json
 from datetime import datetime

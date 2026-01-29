@@ -51,8 +51,8 @@ The current polling every 5 seconds is... not great. Every time I test with frie
 
 - [ ] Avatar upload (not just URL)
 - [ ] Profile page viewable by others (`/user/username`)
-- [ ] Bio with markdown support
-- [ ] Social links (GitHub, Twitter, etc)
+- [ ] Bio with markdown support 
+- [ ] Social links(GitHub, Twitter, etc)
 - [ ] "Member since" badge tiers (1 month, 6 months, 1 year...)
 - [ ] Forgot password flow — Medium/High priority (Owner: TBD, ETA: Q1 2026)
   - [ ] Reset token generation & secure delivery
@@ -80,6 +80,11 @@ The current polling every 5 seconds is... not great. Every time I test with frie
 
 ## 🟢 Nice-to-Have (Eventually)
 
+### Private Messaging
+
+- [ ] DM other users
+- [ ] Message read receipts
+- [ ] Block users --> only can be done by admin
 ### Activity & Gamification
 
 I kinda want to make it fun? Not sure how far to take this.
@@ -126,7 +131,7 @@ Just throwing these here so I don't forget:
 - Voice channels? (probably overkill)
 - Collaborative code editor (like a mini CodePen)
 - Integration with GitHub (show commits, PRs)
-- Custom user themes
+- Custom user themes[abhi ke liye not neccessary ]
 - Bot/webhook system for chat
 - Two-factor authentication
 
