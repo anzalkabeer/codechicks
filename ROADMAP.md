@@ -80,12 +80,6 @@ The current polling every 5 seconds is... not great. Every time I test with frie
 
 ## 🟢 Nice-to-Have (Eventually)
 
-### Private Messaging
-
-- [ ] DM other users
-- [ ] Message read receipts
-- [ ] Block users
-
 ### Activity & Gamification
 
 I kinda want to make it fun? Not sure how far to take this.

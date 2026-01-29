@@ -90,59 +90,81 @@ def serve_html(file_path: str):
 # Update static mount to use absolute path
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
-# -- Server-Side Timer State --
-class TimerState:
-    def __init__(self):
-        self.start_time = 0.0
-        self.elapsed_time = 0.0
-        self.is_running = False
 
-timer_state = TimerState()
+# -- User-Specific Timer Logic --
+
+# NOTE: We removed the global TimerState class. 
+# State is now stored in the UserDocument in MongoDB.
+
+from auth.router import get_current_user
 
 class TimerResponse(BaseModel):
     elapsed_time: int  # in milliseconds
     is_running: bool
 
 @app.post("/api/start", response_model=TimerResponse)
-async def start_timer():
-    if not timer_state.is_running:
-        timer_state.start_time = time.time()
-        timer_state.is_running = True
+async def start_timer(current_user: User = Depends(get_current_user)):
+    # Fetch latest user state from DB
+    user_doc = await UserDocument.find_one(UserDocument.email == current_user.email)
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user_doc.timer_is_running:
+        user_doc.timer_start_time = time.time()
+        user_doc.timer_is_running = True
+        await user_doc.save()
     
-    # Return current accumulated time (which doesn't change on start, 
-    # but we return it for consistency)
-    total_ms = int(timer_state.elapsed_time * 1000)
+    # Return total accumulated time
+    total_ms = int(user_doc.timer_elapsed_time * 1000)
     return TimerResponse(elapsed_time=total_ms, is_running=True)
 
 @app.post("/api/stop", response_model=TimerResponse)
-async def stop_timer():
-    if timer_state.is_running:
-        # Calculate how long it ran since last start
-        now = time.time()
-        run_duration = now - timer_state.start_time
-        timer_state.elapsed_time += run_duration
-        timer_state.is_running = False
-        timer_state.start_time = 0.0
+async def stop_timer(current_user: User = Depends(get_current_user)):
+    user_doc = await UserDocument.find_one(UserDocument.email == current_user.email)
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    total_ms = int(timer_state.elapsed_time * 1000)
+    if user_doc.timer_is_running:
+        # Calculate session duration
+        now = time.time()
+        run_duration = now - user_doc.timer_start_time
+        
+        # Update state
+        user_doc.timer_elapsed_time += run_duration
+        user_doc.timer_is_running = False
+        user_doc.timer_start_time = 0.0
+        await user_doc.save()
+
+    total_ms = int(user_doc.timer_elapsed_time * 1000)
     return TimerResponse(elapsed_time=total_ms, is_running=False)
 
 @app.post("/api/reset", response_model=TimerResponse)
-async def reset_timer():
-    timer_state.start_time = 0.0
-    timer_state.elapsed_time = 0.0
-    timer_state.is_running = False
+async def reset_timer(current_user: User = Depends(get_current_user)):
+    user_doc = await UserDocument.find_one(UserDocument.email == current_user.email)
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_doc.timer_start_time = 0.0
+    user_doc.timer_elapsed_time = 0.0
+    user_doc.timer_is_running = False
+    await user_doc.save()
+
     return TimerResponse(elapsed_time=0, is_running=False)
 
 @app.get("/api/status", response_model=TimerResponse)
-async def get_timer_status():
-    total_elapsed = timer_state.elapsed_time
-    if timer_state.is_running:
-        total_elapsed += (time.time() - timer_state.start_time)
+async def get_timer_status(current_user: User = Depends(get_current_user)):
+    user_doc = await UserDocument.find_one(UserDocument.email == current_user.email)
+    if not user_doc:
+         # Fallback for unauthed (shouldn't happen due to dependency) or error
+         return TimerResponse(elapsed_time=0, is_running=False)
+
+    total_elapsed = user_doc.timer_elapsed_time
+    if user_doc.timer_is_running:
+        total_elapsed += (time.time() - user_doc.timer_start_time)
     
     return TimerResponse(
         elapsed_time=int(total_elapsed * 1000), 
-        is_running=timer_state.is_running
+        is_running=user_doc.timer_is_running
     )
 
 # NOTE: /api/dashboard is now handled by routers/dashboard.py with auth protection

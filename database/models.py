@@ -43,6 +43,11 @@ class UserDocument(Document):
     
     # Status flags
     profile_complete: bool = False
+
+    # Persistent Timer State
+    timer_start_time: float = 0.0
+    timer_elapsed_time: float = 0.0
+    timer_is_running: bool = False
     
     # Timestamps (IST)
     created_at: datetime = Field(default_factory=now_ist)
