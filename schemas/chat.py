@@ -15,6 +15,11 @@ class MessageCreate(BaseModel):
     """Schema for creating a new chat message."""
     content: str = Field(..., min_length=1, max_length=2000)
     room_id: str = "global"
+    
+    # Reply fields (optional)
+    reply_to_id: Optional[str] = None
+    reply_to_username: Optional[str] = None
+    reply_to_content: Optional[str] = None
 
 
 class MessageUpdate(BaseModel):

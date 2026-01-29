@@ -39,7 +39,10 @@ def message_to_response(msg: MessageDocument) -> MessageResponse:
         content=msg.content,
         timestamp=ist_timestamp,
         room_id=msg.room_id,
-        message_type=msg.message_type
+        message_type=msg.message_type,
+        reply_to_id=msg.reply_to_id,
+        reply_to_username=msg.reply_to_username,
+        reply_to_content=msg.reply_to_content
     )
 
 
@@ -91,10 +94,9 @@ async def send_message(
     Send a new chat message.
 
     The message will be associated with the authenticated user.
+    Supports replying to another message.
 
     Protected endpoint - requires valid JWT token.
-
-    TODO: Broadcast to WebSocket connections for real-time updates.
     """
     # Use display_name, fallback to username, then email prefix
     sender_display = (
@@ -108,13 +110,13 @@ async def send_message(
         sender_name=sender_display,
         content=message.content,
         room_id=message.room_id,
-        message_type="text"
+        message_type="text",
+        reply_to_id=message.reply_to_id,
+        reply_to_username=message.reply_to_username,
+        reply_to_content=message.reply_to_content
     )
 
     await new_message.insert()
-
-    # TODO: WebSocket broadcast here
-    # await broadcast_message(new_message)
 
     return message_to_response(new_message)
 

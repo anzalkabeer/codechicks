@@ -672,16 +672,26 @@
             input.disabled = true;
 
             try {
+                // Build message payload
+                const payload = {
+                    content: content,
+                    room_id: 'global'
+                };
+
+                // Add reply data if replying to a message
+                if (activeReplyData) {
+                    payload.reply_to_id = activeReplyData.id;
+                    payload.reply_to_username = activeReplyData.username;
+                    payload.reply_to_content = activeReplyData.text.substring(0, 100); // Truncate
+                }
+
                 // Send message via HTTP POST
                 const response = await authFetch('/api/chat/messages', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        content: content,
-                        room_id: 'global'
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response || !response.ok) {
@@ -697,7 +707,10 @@
                     username: newMsg.sender_name,
                     sender_id: newMsg.sender_id,
                     message: newMsg.content,
-                    timestamp: newMsg.timestamp
+                    timestamp: newMsg.timestamp,
+                    reply_to_id: newMsg.reply_to_id,
+                    reply_to_username: newMsg.reply_to_username,
+                    reply_to_content: newMsg.reply_to_content
                 });
 
                 input.value = '';
