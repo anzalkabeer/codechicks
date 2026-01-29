@@ -20,7 +20,7 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ### [2026-01-29] - Visual Polish, Persistent Timer & OAuth Integration
 
-**Contributor:** Keshav/Anzal (AI)
+**Contributor:** Keshav
 
 #### ✅ Completed
 
@@ -599,4 +599,4 @@ python -m uvicorn clock_:app --reload --host 127.0.0.1 --port 8000
 
 ---
 
-*Last Updated: 2026-01-29 by Keshav/Anzal - Refactoring & Fixes*
+*Last Updated: 2026-01-29 by Keshav - Refactoring & Fixes*
