@@ -5,7 +5,7 @@ import json
 import sys
 import time
 
-BASE_URL = "http://localhost:8000/auth"
+BASE_URL = "http://codechicks.vercel.app/auth"
 
 def request(method, endpoint, data=None, token=None):
     url = f"{BASE_URL}{endpoint}"
