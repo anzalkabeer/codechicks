@@ -18,6 +18,47 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ## Changelog
 
+### [2026-01-30] - HTTP Polling Fallback & Reply Support
+
+**Contributor:** Anzal (with AI assistance)
+
+#### ✅ Completed
+
+1. **Vercel WebSocket Limitation Workaround:**
+   - **Issue:** Discovered that Vercel serverless functions do NOT support WebSockets.
+   - **Solution:** Replaced WebSocket logic with HTTP polling fallback.
+   - **Details:**
+     - Chat now polls `/api/chat/messages` every 3 seconds for new messages.
+     - Status indicator shows "Connected (Polling)" with green dot.
+     - Removed WebSocket connection attempts on production.
+
+2. **Bug Fix - Missing HTTPException Import:**
+   - Fixed `NameError` in `globalchat/main.py` caused by missing `HTTPException` import.
+   - This was causing the WebSocket endpoint to fail silently.
+
+3. **Reply Feature - HTTP Support:**
+   - **Schema Update (`schemas/chat.py`):** Added `reply_to_id`, `reply_to_username`, `reply_to_content` fields to `MessageCreate`.
+   - **Endpoint Update (`routers/chat.py`):** `POST /api/chat/messages` now accepts and stores reply data.
+   - **Helper Update:** `message_to_response()` now includes reply fields in response.
+   - **Frontend Update:** `sendMessage()` includes reply data when replying to a message.
+
+4. **Edit & Delete - HTTP Implementation:**
+   - `saveEdit()` now uses `PUT /api/chat/messages/:id` instead of WebSocket.
+   - `confirmDelete()` now uses `DELETE /api/chat/messages/:id` instead of WebSocket.
+   - Both functions update UI immediately on successful response.
+
+**Files Modified:**
+- `globalchat/main.py` - Added HTTPException import
+- `schemas/chat.py` - Added reply fields to MessageCreate
+- `routers/chat.py` - Updated send_message and message_to_response for replies
+- `static/globalchat_ui/index.html` - Replaced WebSocket with HTTP polling, updated send/edit/delete
+
+**Known Limitation:**
+- Messages appear with ~3 second delay for other users (polling interval).
+- For true real-time, would need to migrate to a platform that supports WebSockets (Railway, Render) or use a third-party service (Pusher, Ably).
+
+---
+
 ### [2026-01-29] - Visual Polish, Persistent Timer & OAuth Integration
 
 **Contributor:** Keshav
