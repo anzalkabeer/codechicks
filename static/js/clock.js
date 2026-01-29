@@ -43,6 +43,8 @@ async function syncTimerState() {
     }
 }
 syncTimerState();
+// Poll every 5s to sync with other tabs/overlay
+setInterval(syncTimerState, 5000);
 
 function updateButtonState() {
     if (isRunning) {

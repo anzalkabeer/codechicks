@@ -12,14 +12,14 @@
     <style>
         :root {
             --bg-dark: #0a0a0f;
-            --glass-bg: rgba(255, 255, 255, 0.04);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.05);
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
             --text-muted: rgba(255, 255, 255, 0.4);
-            --accent: #667eea;
-            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent: #00f2ea;
+            --accent-gradient: linear-gradient(135deg, #00f2ea 0%, #0080ff 100%);
             --admin-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             --success: #00d26a;
             --radius: 16px;
@@ -255,8 +255,8 @@
         #clock-time {
             font-size: 5rem;
             font-weight: 700;
-            color: var(--accent);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            color: #00f2ea;
+            text-shadow: 0 0 40px rgba(0, 242, 234, 0.6), 0 0 80px rgba(0, 242, 234, 0.3);
             font-variant-numeric: tabular-nums;
             letter-spacing: 2px;
             line-height: 1;
@@ -287,33 +287,36 @@
         }
 
         #btn-toggle {
-            background: rgba(0, 210, 106, 0.2);
-            border-color: rgba(0, 210, 106, 0.3);
+            /* Start state default */
+            background: #022c22;
+            color: #10b981;
+            border: 1px solid #059669;
         }
 
         #btn-toggle:hover {
-            background: rgba(0, 210, 106, 0.3);
-            box-shadow: 0 4px 15px rgba(0, 210, 106, 0.2);
+            background: rgba(16, 185, 129, 0.2);
         }
 
         #btn-toggle.running {
-            background: rgba(255, 71, 87, 0.2);
-            border-color: rgba(255, 71, 87, 0.3);
+            /* Pause State - Burgundy */
+            background: #3f1016;
+            color: #fda4af;
+            border: 1px solid #9f1239;
         }
 
         #btn-toggle.running:hover {
-            background: rgba(255, 71, 87, 0.3);
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.2);
+            background: rgba(225, 29, 72, 0.2);
         }
 
         #btn-reset {
-            background: rgba(255, 193, 7, 0.2);
-            border-color: rgba(255, 193, 7, 0.3);
+            /* Reset State - Gold */
+            background: #422006;
+            color: #fcd34d;
+            border: 1px solid #92400e;
         }
 
         #btn-reset:hover {
-            background: rgba(255, 193, 7, 0.3);
-            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            background: rgba(245, 158, 11, 0.2);
         }
 
         /* Responsive */

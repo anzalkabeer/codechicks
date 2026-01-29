@@ -11,11 +11,11 @@
     --text-secondary: rgba(255, 255, 255, 0.7);
     --text-muted: rgba(255, 255, 255, 0.4);
 
-    /* Admin Gold/Amber Theme */
-    --accent: #f59e0b;
-    --accent-light: #fbbf24;
-    --accent-dark: #d97706;
-    --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    /* Admin Theme - Switched to Cyan per user strict request */
+    --accent: #00f2ea;
+    --accent-light: #00b4d8;
+    --accent-dark: #0096c7;
+    --accent-gradient: linear-gradient(135deg, #00f2ea 0%, #0080ff 100%);
 
     --success: #00d26a;
     --error: #ff4757;
@@ -43,6 +43,8 @@ body {
     background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Glass Classes */

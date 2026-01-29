@@ -10,7 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/dashboard/style.css">
+    <link rel="stylesheet" href="/static/dashboard/style.css?v=2">
+    <link rel="stylesheet" href="/static/css/timer-overlay.css?v=2">
 </head>
 
 <body>
@@ -134,31 +135,12 @@
             </section>
         </main>
 
-        <!-- Floating Stopwatch Button -->
-        <button class="floating-stopwatch-btn" id="stopwatch-toggle" title="Open Stopwatch">
-            <span class="stopwatch-icon">⏱️</span>
-        </button>
 
-        <!-- Floating Stopwatch Window -->
-        <div class="floating-stopwatch glass-panel" id="stopwatch-window">
-            <div class="stopwatch-header" id="stopwatch-header">
-                <span class="stopwatch-title">⏱️ Stopwatch</span>
-                <div class="stopwatch-actions">
-                    <button class="action-btn minimize" id="minimize-btn" title="Minimize">−</button>
-                    <button class="action-btn close" id="close-btn" title="Close">✕</button>
-                </div>
-            </div>
-            <div class="stopwatch-body" id="stopwatch-body">
-                <div class="stopwatch-display" id="stopwatch-display">00:00:00</div>
-                <div class="stopwatch-controls">
-                    <button class="ctrl-btn start" id="start-btn">▶</button>
-                    <button class="ctrl-btn pause" id="pause-btn">⏸</button>
-                    <button class="ctrl-btn reset" id="reset-btn">↺</button>
-                </div>
-            </div>
-        </div>
     </div>
 
+
+
+    <script src="/static/js/timer-overlay.js"></script>
     <script>
         // ===== Dashboard Data Loading =====
         document.addEventListener('DOMContentLoaded', async () => {
@@ -227,97 +209,7 @@
             }
         }
 
-        // ===== Stopwatch Logic =====
-        const toggleBtn = document.getElementById('stopwatch-toggle');
-        const stopwatchWindow = document.getElementById('stopwatch-window');
-        const closeBtn = document.getElementById('close-btn');
-        const minimizeBtn = document.getElementById('minimize-btn');
-        const stopwatchBody = document.getElementById('stopwatch-body');
-        const header = document.getElementById('stopwatch-header');
-        const startBtn = document.getElementById('start-btn');
-        const pauseBtn = document.getElementById('pause-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const display = document.getElementById('stopwatch-display');
-
-        let seconds = 0;
-        let interval = null;
-        let isRunning = false;
-        let isMinimized = false;
-
-        // Show stopwatch
-        toggleBtn.addEventListener('click', () => {
-            stopwatchWindow.classList.add('active');
-            toggleBtn.style.display = 'none';
-        });
-
-        // Close stopwatch
-        closeBtn.addEventListener('click', () => {
-            stopwatchWindow.classList.remove('active');
-            toggleBtn.style.display = 'flex';
-        });
-
-        // Minimize
-        minimizeBtn.addEventListener('click', () => {
-            isMinimized = !isMinimized;
-            stopwatchBody.style.display = isMinimized ? 'none' : 'flex';
-            minimizeBtn.textContent = isMinimized ? '+' : '−';
-        });
-
-        // Format time
-        function formatTime(sec) {
-            const h = Math.floor(sec / 3600);
-            const m = Math.floor((sec % 3600) / 60);
-            const s = sec % 60;
-            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-
-        // Start
-        startBtn.addEventListener('click', () => {
-            if (!isRunning) {
-                isRunning = true;
-                interval = setInterval(() => {
-                    seconds++;
-                    display.textContent = formatTime(seconds);
-                }, 1000);
-            }
-        });
-
-        // Pause
-        pauseBtn.addEventListener('click', () => {
-            isRunning = false;
-            clearInterval(interval);
-        });
-
-        // Reset
-        resetBtn.addEventListener('click', () => {
-            isRunning = false;
-            clearInterval(interval);
-            seconds = 0;
-            display.textContent = '00:00:00';
-        });
-
-        // ===== Draggable Window =====
-        let isDragging = false;
-        let offsetX = 0, offsetY = 0;
-
-        header.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'BUTTON') return;
-            isDragging = true;
-            offsetX = e.clientX - stopwatchWindow.offsetLeft;
-            offsetY = e.clientY - stopwatchWindow.offsetTop;
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const x = Math.max(0, Math.min(e.clientX - offsetX, window.innerWidth - stopwatchWindow.offsetWidth));
-            const y = Math.max(0, Math.min(e.clientY - offsetY, window.innerHeight - stopwatchWindow.offsetHeight));
-            stopwatchWindow.style.left = x + 'px';
-            stopwatchWindow.style.top = y + 'px';
-            stopwatchWindow.style.right = 'auto';
-            stopwatchWindow.style.bottom = 'auto';
-        });
-
-        document.addEventListener('mouseup', () => isDragging = false);
+        // ===== Draggable Window - REMOVED =====
     </script>
 </body>
 

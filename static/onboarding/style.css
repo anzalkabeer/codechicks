@@ -5,13 +5,13 @@
 
 :root {
     --primary-color: #0f172a;
-    --accent-color: #3b82f6;
-    --accent-hover: #2563eb;
+    --accent-color: #00f2ea;
+    --accent-hover: #00b4d8;
     --text-white: #ffffff;
     --text-muted: #94a3b8;
-    --glass-bg: rgba(15, 23, 42, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --input-bg: rgba(255, 255, 255, 0.05);
+    --glass-bg: rgba(15, 23, 42, 0.3);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --input-bg: rgba(255, 255, 255, 0.03);
     --success-color: #22c55e;
     --error-color: #ef4444;
 }
@@ -32,6 +32,8 @@ body {
     align-items: center;
     background-color: #000;
     color: var(--text-white);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Background Image with Overlay - matches login */
@@ -208,7 +210,7 @@ body::before {
     width: 100%;
     padding: 14px;
     background: #0f3d6e;
-    background: linear-gradient(135deg, #1e40af, #172554);
+    background: linear-gradient(135deg, #00f2ea 0%, #0080ff 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -216,7 +218,7 @@ body::before {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 242, 234, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -225,8 +227,8 @@ body::before {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(30, 64, 175, 0.4);
-    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    box-shadow: 0 8px 16px rgba(0, 242, 234, 0.4);
+    background: linear-gradient(135deg, #00c4b4, #0060c0);
 }
 
 .btn-primary:active {

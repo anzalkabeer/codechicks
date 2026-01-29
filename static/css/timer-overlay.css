@@ -1,0 +1,127 @@
+/* Floating Timer Overlay - Matches 'Image 2' exactly */
+:root {
+    --timer-bg: rgba(10, 10, 15, 0.9);
+    --timer-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Container overrides for floating position */
+#floating-timer-overlay {
+    position: fixed;
+    bottom: 50px;
+    right: 50px;
+    z-index: 9999;
+    display: none;
+    /* Hidden by default */
+}
+
+#floating-timer-overlay.active {
+    display: block;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* The Clock Container (Visual Part) */
+.overlay-clone#clock-container {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    padding: 40px 60px;
+    cursor: move;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    min-width: 400px;
+    /* Ensure roughly same size */
+}
+
+/* Time Display */
+#clock-container #clock-time {
+    font-family: 'Inter', sans-serif;
+    font-size: 5rem;
+    font-weight: 700;
+    color: #00f2ea;
+    text-shadow: 0 0 40px rgba(0, 242, 234, 0.6), 0 0 80px rgba(0, 242, 234, 0.3);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+    line-height: 1;
+}
+
+/* Controls */
+#clock-container .controls {
+    display: flex;
+    gap: 16px;
+}
+
+#clock-container .ctrl-btn {
+    padding: 14px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+    color: #ffffff;
+    font-family: inherit;
+}
+
+#clock-container .ctrl-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Button States (Identical to clock/index.html) */
+#clock-container #timer-start-btn {
+    /* Start state default */
+    background: #022c22;
+    color: #10b981;
+    border: 1px solid #059669;
+}
+
+#clock-container #timer-start-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+#clock-container #timer-start-btn.running {
+    /* Pause State - Burgundy */
+    background: #3f1016;
+    color: #fda4af;
+    border: 1px solid #9f1239;
+}
+
+#clock-container #timer-start-btn.running:hover {
+    background: rgba(225, 29, 72, 0.2);
+}
+
+#clock-container #timer-reset-btn {
+    /* Reset State - Gold */
+    background: #422006;
+    color: #fcd34d;
+    border: 1px solid #92400e;
+}
+
+#clock-container #timer-reset-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+}
+
+.timer-close-btn:hover {
+    color: white !important;
+}

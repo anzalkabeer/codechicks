@@ -35,8 +35,8 @@ class ConnectionManager:
         self.active_connections: List[WebSocket] = []
     
     async def connect(self, websocket: WebSocket):
-        """Accepts the WebSocket connection and adds it to our registry."""
-        await websocket.accept()
+        """Adds the WebSocket connection to our registry (Assume already accepted)."""
+        # await websocket.accept()  <-- Moved to endpoint
         self.active_connections.append(websocket)
         print(f"✅ New connection! Total active: {len(self.active_connections)}")
     
@@ -76,7 +76,9 @@ async def websocket_chat_endpoint(websocket: WebSocket, token: str = Query(None)
     Main WebSocket endpoint for the global chat room.
     Requires 'token' query parameter for authentication.
     """
-    # 1. AUTHENTICATION (Before Accepting)
+    # 1. CONNECTION & AUTH CHECK
+    await websocket.accept() # User requested to accept before auth checks
+    
     if not token:
         await websocket.close(code=4003, reason="Authentication required")
         return

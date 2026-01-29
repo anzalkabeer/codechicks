@@ -20,6 +20,7 @@ from starlette.requests import Request
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from fastapi.responses import RedirectResponse
+from pymongo.errors import DuplicateKeyError
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -229,25 +230,37 @@ async def downgrade_to_user(current_user: User = Depends(get_current_user)):
 
 oauth = OAuth()
 
+# Validate Environment Variables
+# We don't want to start the app with broken auth configuration if possible,
+# or at least warn/fail on specific missing keys if we expect them to work.
+if not os.getenv('GOOGLE_CLIENT_ID') or not os.getenv('GOOGLE_CLIENT_SECRET'):
+    print("WARNING: Google OAuth credentials missing")
+
+if not os.getenv('GITHUB_CLIENT_ID') or not os.getenv('GITHUB_CLIENT_SECRET'):
+    print("WARNING: GitHub OAuth credentials missing")
+
+
 # Google Configuration
-oauth.register(
-    name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
-)
+if os.getenv('GOOGLE_CLIENT_ID'):
+    oauth.register(
+        name='google',
+        client_id=os.getenv('GOOGLE_CLIENT_ID'),
+        client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'}
+    )
 
 # GitHub Configuration
-oauth.register(
-    name='github',
-    client_id=os.getenv('GITHUB_CLIENT_ID'),
-    client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
-    authorize_url='https://github.com/login/oauth/authorize',
-    access_token_url='https://github.com/login/oauth/access_token',
-    api_base_url='https://api.github.com/',
-    client_kwargs={'scope': 'user:email'}
-)
+if os.getenv('GITHUB_CLIENT_ID'):
+    oauth.register(
+        name='github',
+        client_id=os.getenv('GITHUB_CLIENT_ID'),
+        client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+        authorize_url='https://github.com/login/oauth/authorize',
+        access_token_url='https://github.com/login/oauth/access_token',
+        api_base_url='https://api.github.com/',
+        client_kwargs={'scope': 'user:email'}
+    )
 
 
 @router.get("/login/{provider}")
@@ -255,6 +268,13 @@ async def login_via_provider(provider: str, request: Request):
     """
     Redirects user to the OAuth provider (google or github).
     """
+    # Validate provider
+    valid_providers = ['google', 'github']
+    if provider not in valid_providers:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported provider: {provider}"
+        )
     # Construct absolute redirect URI based on base URL
     # Vercel/Prod vs Localhost
     # Use environment variable if set (Prod), otherwise use the request's base URL (Local)
@@ -277,10 +297,14 @@ async def auth_callback(provider: str, request: Request):
     Exchanges code for token, gets user info, and logs them in.
     """
     client = oauth.create_client(provider)
+    if not client:
+        raise HTTPException(status_code=400, detail="Invalid provider")
+
     try:
         token = await client.authorize_access_token(request)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"OAuth Error: {str(e)}")
+        print(f"OAuth Error: {str(e)}") 
+        raise HTTPException(status_code=400, detail="OAuth Authentication Failed")
 
     user_info = None
     email = None
@@ -288,30 +312,43 @@ async def auth_callback(provider: str, request: Request):
     avatar_url = None
     display_name = None
 
+    # --- PROVIDER SPECIFIC LOGIC ---
     if provider == 'google':
         user_info = token.get('userinfo')
         if not user_info:
-             # Fallback if userinfo not in token (for some flows)
              user_info = await client.userinfo(token=token)
         
         email = user_info.get('email')
         display_name = user_info.get('name')
         avatar_url = user_info.get('picture')
-        username = email.split('@')[0]
+        
+        if email:
+            username = email.split('@')[0]
 
     elif provider == 'github':
         # GitHub requires separate API calls
         resp = await client.get('user', token=token)
-        user_info = resp.json()
+        if resp.status_code != 200:
+            print(f"GitHub API Error: {resp.status_code} {resp.text}")
+            raise HTTPException(status_code=400, detail="Failed to fetch GitHub user")
+            
+        try:
+            user_info = resp.json()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid response from GitHub")
         
         # Get email (might be private)
         email = user_info.get('email')
         if not email:
             resp_emails = await client.get('user/emails', token=token)
-            for e in resp_emails.json():
-                if e.get('primary') and e.get('verified'):
-                    email = e['email']
-                    break
+            if resp_emails.status_code == 200:
+                try:
+                    for e in resp_emails.json():
+                        if e.get('primary') and e.get('verified'):
+                            email = e['email']
+                            break
+                except ValueError:
+                    pass # Ignore if email list is unparseable
         
         username = user_info.get('login')
         display_name = user_info.get('name') or username
@@ -328,28 +365,41 @@ async def auth_callback(provider: str, request: Request):
     if not user_doc:
         # Create new user
         is_new_user = True
-        # Ensure unique username
+        
+        # Prepare base username
         base_username = username or email.split('@')[0]
         base_username = re.sub(r'[^a-z0-9]', '', base_username.lower())
-        final_username = base_username
+        if not base_username: 
+            base_username = "user"
         
-        counter = 1
-        while await UserDocument.find_one(UserDocument.username == final_username):
-            final_username = f"{base_username}{counter}"
-            counter += 1
-            
-        new_user = UserDocument(
-            email=email,
-            username=final_username,
-            display_name=display_name,
-            avatar_url=avatar_url,
-            provider=provider,
-            role=UserRole.USER,
-            disabled=False,
-            hashed_password=None # Explicitly None for OAuth users
-        )
-        await new_user.insert()
-        user_doc = new_user
+        # Atomic Insert Loop (Race Condition Handling)
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                if attempt == 0:
+                    final_username = base_username
+                else:
+                    # Append random suffix on collision
+                    final_username = f"{base_username}{random.randint(100, 9999)}"
+                
+                new_user = UserDocument(
+                    email=email,
+                    username=final_username,
+                    display_name=display_name,
+                    avatar_url=avatar_url,
+                    provider=provider,
+                    role=UserRole.USER,
+                    disabled=False,
+                    hashed_password=None # Explicitly None for OAuth users
+                )
+                await new_user.insert()
+                user_doc = new_user
+                break # Success!
+            except DuplicateKeyError:
+                if attempt == max_retries - 1:
+                    print(f"Failed to generate unique username for {email}")
+                    raise HTTPException(status_code=500, detail="Failed to create user account (username collision)")
+                continue # Retry with new suffix
     else:
         # Update avatar/provider if missing (optional)
         if not user_doc.avatar_url and avatar_url:

@@ -77,6 +77,9 @@
                 // 2. Save to localStorage
                 localStorage.setItem('access_token', token);
 
+                // Security: Remove token from URL/History
+                window.history.replaceState({}, document.title, window.location.pathname);
+
                 // 3. Redirect logic
                 const isNewUser = urlParams.get('new_user') === 'true';
                 const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
