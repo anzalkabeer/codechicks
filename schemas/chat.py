@@ -32,6 +32,11 @@ class MessageResponse(BaseModel):
     timestamp: datetime
     room_id: str
     message_type: str
+    
+    # Reply info
+    reply_to_id: Optional[str] = None
+    reply_to_username: Optional[str] = None
+    reply_to_content: Optional[str] = None
 
 
 class MessageListResponse(BaseModel):

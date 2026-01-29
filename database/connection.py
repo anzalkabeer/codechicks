@@ -7,6 +7,7 @@ Provides database initialization and connection management using Beanie ODM.
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import certifi
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -32,8 +33,10 @@ async def init_db():
     
     try:
         # Add serverSelectionTimeoutMS for faster failure detection
+        # Use certifi for SSL certificate verification (fixes macOS issues with MongoDB Atlas)
         _client = AsyncIOMotorClient(
             mongodb_uri,
+            tlsCAFile=certifi.where(),
             serverSelectionTimeoutMS=5000,  # 5 second timeout
             connectTimeoutMS=5000,
             socketTimeoutMS=5000

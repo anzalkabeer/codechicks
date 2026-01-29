@@ -145,6 +145,46 @@ async def get_message(
     return message_to_response(msg)
 
 
+@router.put("/messages/{message_id}", response_model=MessageResponse)
+async def update_message(
+    message_id: str,
+    update_data: MessageUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update a message content.
+    
+    Protected endpoint - requires valid JWT token.
+    """
+    try:
+        msg = await MessageDocument.get(PydanticObjectId(message_id))
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found"
+        )
+    
+    if not msg or msg.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found"
+        )
+        
+    # Only allow sender to edit their own messages
+    if msg.sender_id != current_user.email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only edit your own messages"
+        )
+
+    if update_data.content:
+        msg.content = update_data.content
+        msg.updated_at = datetime.now()
+        await msg.save()
+        
+    return message_to_response(msg)
+
+
 @router.delete("/messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_message(
     message_id: str,

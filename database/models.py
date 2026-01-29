@@ -78,6 +78,12 @@ class MessageDocument(Document):
     message_type: str = "text"  # text, system, etc.
     is_deleted: bool = False
     
+    # Reply functionality
+    reply_to_id: Optional[str] = None
+    reply_to_username: Optional[str] = None
+    reply_to_content: Optional[str] = None
+
+    
     class Settings:
         name = "messages"
     

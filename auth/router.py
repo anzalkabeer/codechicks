@@ -21,6 +21,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
+
 async def get_user_from_db(email: str) -> Optional[UserDocument]:
     """Fetch user from MongoDB by email."""
     return await UserDocument.find_one(UserDocument.email == email)

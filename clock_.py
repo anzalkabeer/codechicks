@@ -13,6 +13,7 @@ from routers.dashboard import router as dashboard_router
 from routers.chat import router as chat_router
 from routers.profile import router as profile_router
 from routers.admin import router as admin_router
+from globalchat.main import router as globalchat_router
 from database.connection import init_db, close_db
 
 from fastapi.staticfiles import StaticFiles
@@ -64,6 +65,7 @@ app.include_router(dashboard_router)
 app.include_router(chat_router)
 app.include_router(profile_router)
 app.include_router(admin_router)
+app.include_router(globalchat_router)  # WebSocket global chat
 
 from pathlib import Path
 
@@ -156,7 +158,7 @@ async def dashboard_page():
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_page():
     """Serve chat UI (mockup)"""
-    return serve_html("static/chat/index.html")
+    return serve_html("static/globalchat_ui/index.html")
 
 @app.get("/onboarding", response_class=HTMLResponse)
 async def onboarding_page():

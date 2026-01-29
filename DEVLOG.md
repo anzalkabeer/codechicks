@@ -18,6 +18,77 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ## Changelog
 
+### [2026-01-29] - Repository Sync & Conflict Resolution
+
+**Developer:** Anzal
+
+#### ✅ Completed
+
+**Repository Synchronization:**
+- Successfully pulled latest changes from `origin/main`
+- Resolved divergent branch history
+
+**Conflict Resolution:**
+- **`.env.example`**: Merged local Google Auth settings with new remote Admin Key, keeping both configurations.
+- **`clock_.py`**: Manually merged conflicting router inclusions (keeping both Admin and Global Chat routers).
+
+**Files Modified:**
+- `.env.example`
+- `clock_.py`
+
+**Files Added:**
+- `globalchat/`
+- `clock_.py`
+- `auth/router.py`
+
+**New Features Implemented:**
+
+1. **WebSocket Global Chat Logic (`globalchat/main.py`):**
+   - **Connection Logic**: Implemented async WebSocket handshake handling.
+   - **Storage Logic**: Created `ConnectionManager` class to maintain a registry of active `WebSocket` connections in server memory.
+   - **Listening Loop**: Implemented an async `while True` loop to continuously receive messages from connected clients without blocking.
+   - **Broadcasting Logic**: Iterates through active connections to broadcast messages to all users in real-time.
+   - **Disconnect Logic**: Automatically handles connection cleanup when a user leaves to prevent errors.
+   - **Reply to Message Feature**:
+     - **Database Schema Update (`database/models.py`)**:
+       - Added `reply_to_id` (Optional[str]): Stores the ID of the message being replied to.
+       - Added `reply_to_username` (Optional[str]): Caches the username to avoid extra DB lookups.
+       - Added `reply_to_content` (Optional[str]): Caches a snippet of the original message for UI rendering.
+     - **API Schema Update (`schemas/chat.py`)**:
+       - Updated `MessageResponse` model to include the new reply fields, allowing the frontend to receive and render quoted messages.
+     - **WebSocket Handler (`globalchat/main.py`)**:
+       - Updated logic to accept `reply_to` fields from incoming JSON payloads.
+       - Persists reply metadata to MongoDB.
+       - Broadcasts reply details to all connected clients.
+     - **Frontend Implementation**:
+       - **UI Components**: Added a "Reply" button to message actions and a "Reply Preview" bar above the input field (`.message-reply-preview`).
+       - **Interaction**: Clicking reply sets the active state; the preview bar appears (anchored via `.chat-input-wrapper`).
+       - **Rendering**: Quoted messages are visually embedded within the new message bubble (`.message-quote`).
+
+2. **UI Implementation Details:**
+   - **Auth UI**: Built login and registration interfaces using glassmorphism design, integrated with JWT auth flow.
+   - **Dashboard UI**: Created a responsive dashboard featuring:
+     - Real-time statistics cards.
+     - Sidebar navigation.
+     - Dynamic user greeting and role display.
+   - **Global Chat UI**: Developed a chat interface with:
+     - Real-time message appending.
+     - Sidebar showing online status (stub).
+     - Modern bubble styling for sent vs received messages.
+### Date - [24/01/2026]
+   - **Floating Stopwatch Widget**:
+     - Implemented a draggable, semi-transparent stopwatch overlay.
+     - Features: Start, Stop, Reset functionality.
+     - Persists state across page navigation (using localStorage or server state, as implemented).
+
+   - **Bug Fixes**:
+     - **Admin Upgrade Issue**: Fixed 500 Internal Server Error when upgrading to admin by generating and configuring `ADMIN_KEY` in `.env`.
+     - **Auth Router**: Fixed syntax error in `auth/router.py` caused by duplicated exception block.
+
+
+
+---
+
 ### [2026-01-29] - RBAC Implementation & UI Enhancements
 
 **Contributor:** Keshav
@@ -478,4 +549,4 @@ python -m uvicorn clock_:app --reload --host 127.0.0.1 --port 8000
 
 ---
 
-*Last Updated: 2026-01-28 by Keshav - Glassmorphism UI Integration*
+*Last Updated: 2026-01-29 by Anzal - Repository Sync & Conflict Resolution*

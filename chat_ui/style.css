@@ -12,7 +12,6 @@
     --text-muted: rgba(255, 255, 255, 0.4);
     --accent: #667eea;
     --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --admin-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     --success: #00d26a;
     --radius: 16px;
     --radius-sm: 10px;
@@ -29,33 +28,13 @@
 body {
     font-family: 'Inter', sans-serif;
     background: var(--bg-dark);
+    background-image:
+        radial-gradient(ellipse at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+    background-attachment: fixed;
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
-}
-
-/* Background Image */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('/static/img/bg.png') no-repeat center center/cover;
-    z-index: -2;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    z-index: -1;
 }
 
 /* Glass Classes */
@@ -76,8 +55,6 @@ body::after {
     padding: 8px 12px;
     cursor: pointer;
     transition: all 0.2s ease;
-    text-decoration: none;
-    font-size: 0.9rem;
 }
 
 .glass-btn:hover {
@@ -123,71 +100,6 @@ body::after {
 .sidebar-title {
     font-size: 1rem;
     font-weight: 600;
-}
-
-/* Sidebar Navigation */
-.sidebar-nav {
-    margin-bottom: 20px;
-}
-
-.nav-links {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.nav-links li a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-}
-
-.nav-links li a:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-}
-
-.nav-links li.active a {
-    background: var(--accent-gradient);
-    color: white;
-}
-
-.nav-links li a i {
-    width: 18px;
-    text-align: center;
-}
-
-/* Admin Link */
-.admin-link {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--glass-border);
-}
-
-.admin-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    background: var(--admin-gradient);
-    color: #000;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.admin-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 /* Online Users */
@@ -246,7 +158,6 @@ body::after {
     justify-content: center;
     font-weight: 600;
     font-size: 0.85rem;
-    color: white;
 }
 
 .user-name {
@@ -259,27 +170,6 @@ body::after {
     height: 8px;
     background: var(--success);
     border-radius: 50%;
-}
-
-.loading-users {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-muted);
-}
-
-/* Sidebar Footer */
-.sidebar-footer {
-    padding-top: 16px;
-    border-top: 1px solid var(--glass-border);
-    margin-top: auto;
-}
-
-.sidebar-footer .logout-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
 }
 
 /* Main Chat Area */
@@ -335,28 +225,6 @@ body::after {
     border-radius: 3px;
 }
 
-.loading-indicator {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-muted);
-}
-
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 3rem;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
-
-.empty-state p {
-    font-size: 1rem;
-}
-
 /* Messages */
 .message {
     display: flex;
@@ -383,7 +251,6 @@ body::after {
     font-weight: 600;
     font-size: 0.9rem;
     flex-shrink: 0;
-    color: white;
 }
 
 .message-content {
@@ -431,13 +298,10 @@ body::after {
 
 /* Message Input */
 .message-input-area {
-    padding: 12px 16px;
-}
-
-.message-input-area form {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 12px 16px;
 }
 
 .message-input {
@@ -472,12 +336,6 @@ body::after {
 .send-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.send-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
 }
 
 /* Responsive */
