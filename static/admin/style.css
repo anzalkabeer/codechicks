@@ -1,5 +1,5 @@
 /* ========================================
-   Admin Panel - Gold/Amber Glassmorphism
+   Admin Panel - Cyan/Nebula Glassmorphism
    ======================================== */
 
 :root {
@@ -11,7 +11,7 @@
     --text-secondary: rgba(255, 255, 255, 0.7);
     --text-muted: rgba(255, 255, 255, 0.4);
 
-    /* Admin Theme - Switched to Cyan per user strict request */
+    /* Admin Theme - Cyan */
     --accent: #00f2ea;
     --accent-light: #00b4d8;
     --accent-dark: #0096c7;
@@ -37,12 +37,23 @@
 body {
     font-family: 'Inter', sans-serif;
     background: var(--bg-dark);
+    /* Updated to use Cyan pulses instead of Orange/Gold */
     background-image:
-        radial-gradient(ellipse at 20% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(217, 119, 6, 0.08) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 80%, rgba(0, 242, 234, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 128, 255, 0.08) 0%, transparent 50%);
     background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Scoped User Select */
+.glass-btn,
+.action-btn,
+.logout-btn,
+.mobile-toggle,
+.nav-links li a {
     user-select: none;
     -webkit-user-select: none;
 }
@@ -183,15 +194,16 @@ body {
     transition: all 0.2s ease;
 }
 
+/* Replaced Hover Color */
 .nav-links li a:hover {
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(0, 242, 234, 0.1);
     color: var(--accent);
 }
 
 .nav-links li a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(0, 242, 234, 0.1);
 }
 
 .nav-links li.active a {
@@ -264,7 +276,7 @@ body {
 }
 
 .stat-icon.users {
-    background: rgba(245, 158, 11, 0.2);
+    background: rgba(0, 242, 234, 0.2);
     color: var(--accent);
 }
 
@@ -279,7 +291,7 @@ body {
 }
 
 .stat-icon.admins {
-    background: rgba(245, 158, 11, 0.2);
+    background: rgba(0, 242, 234, 0.2);
     color: var(--accent);
 }
 
@@ -323,8 +335,8 @@ body {
     align-items: center;
     gap: 10px;
     padding: 14px 24px;
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: rgba(0, 242, 234, 0.1);
+    border: 1px solid rgba(0, 242, 234, 0.3);
     border-radius: var(--radius-sm);
     color: var(--accent);
     text-decoration: none;
@@ -335,14 +347,14 @@ body {
 }
 
 .action-btn:hover {
-    background: rgba(245, 158, 11, 0.2);
+    background: rgba(0, 242, 234, 0.2);
     transform: translateY(-2px);
 }
 
 .action-btn:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    background: rgba(245, 158, 11, 0.2);
+    background: rgba(0, 242, 234, 0.2);
 }
 
 .action-btn i {

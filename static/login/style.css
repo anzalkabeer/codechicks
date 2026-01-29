@@ -26,8 +26,8 @@ body {
     justify-content: center;
     align-items: center;
     background-color: #000;
-    user-select: none;
-    -webkit-user-select: none;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 /* Background Image with Overlay */

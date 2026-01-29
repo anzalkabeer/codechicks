@@ -37,7 +37,7 @@ body {
 }
 
 /* Allow selection in chat area */
-.chat-messages,
+.messages-area,
 .message-content,
 .chat-input-area,
 .message-text {

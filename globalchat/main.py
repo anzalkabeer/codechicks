@@ -77,27 +77,32 @@ async def websocket_chat_endpoint(websocket: WebSocket, token: str = Query(None)
     Requires 'token' query parameter for authentication.
     """
     # 1. CONNECTION & AUTH CHECK
-    await websocket.accept() # User requested to accept before auth checks
+    # Do NOT accept yet. Validate token first.
     
     if not token:
-        await websocket.close(code=4003, reason="Authentication required")
-        return
+        # We can't use websocket.close() if we haven't accepted, but for a router endpoint
+        # usually FastAPI handles the handshake. 
+        # Standard pattern: Accept -> Close if bad, OR just return HTTP error (Raise exception).
+        # However, to be polite to WS clients, we usually need to accept to send a Close Frame.
+        # BUT user requests: "do not accept... until validated".
+        # This means raising HTTPException is the way for pre-handshake rejection.
+        raise HTTPException(status_code=403, detail="Authentication required")
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            await websocket.close(code=4003, reason="Invalid token")
-            return
+             raise HTTPException(status_code=403, detail="Invalid token")
     except JWTError:
-        await websocket.close(code=4003, reason="Invalid token")
-        return
+        raise HTTPException(status_code=403, detail="Invalid token")
         
     # Get user from DB
     user = await UserDocument.find_one(UserDocument.email == email)
     if not user:
-        await websocket.close(code=4003, reason="User not found")
-        return
+        raise HTTPException(status_code=403, detail="User not found")
+        
+    # Validated Identity - NOW we accept
+    await websocket.accept()
         
     # Validated Identity
     current_user_email = user.email

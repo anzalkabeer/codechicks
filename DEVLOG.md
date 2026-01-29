@@ -18,6 +18,56 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ## Changelog
 
+### [2026-01-29] - Visual Polish, Persistent Timer & OAuth Integration
+
+**Contributor:** Keshav/Anzal (AI)
+
+#### ✅ Completed
+
+1.  **Social Authentication (OAuth2):**
+    *   **Providers:** Implemented secure login via **Google** and **GitHub**.
+    *   **Backend Logic:**
+        *   Integrated `authlib` for standardized OAuth flow.
+        *   Securely loading credentials from `googleOAuthSecret.json` and `githubOAuthSecret.json` (or Environment Variables).
+        *   **Smart Username Generation:** Automatically generates unique usernames (`github_user_123`) if collisions occur.
+        *   **Conflict Handling:** Handles race conditions using `DuplicateKeyError` checks during user creation.
+        *   **Safety:** Validates `CLIENT_ID`/`SECRET` presence on startup to prevent crash-loops.
+    *   **Frontend:**
+        *   Added "Continue with Google/GitHub" buttons to Login and Register pages.
+        *   Accessibility improvements (`aria-label`) for social buttons.
+        *   **URL Cleanup:** Automatically removes sensitive Auth tokens from the URL bar after successful redirection to prevent leakage.
+
+2.  **Frost/Cyber Theme Overhaul (Cyan/Blue):**
+    *   **New Accent Color:** Changed from Purple to Cyan/Electric Blue (`#00f2ea` -> `#0080ff` gradient).
+    *   **Glassmorphism:** Increased transparency (`glass-bg` 0.02 opacity) to better reveal the nebula background.
+    *   **Admin Panel:** Updated Admin theme from Gold to match the new global Cyan theme for consistency.
+    *   **Fixes:** Purged leftover purple RGB values from Dashboard CSS.
+
+3.  **Persistent Floating Timer ("Literal Mirror"):**
+    *   **UI Update:** Replaced the card-style floating timer with a **literal copy** of the `/clock` page layout.
+    *   **Features:**
+        *   Exact styling match: Big Cyan numbers, standard buttons (Green Start, Burgundy Pause, Gold Reset).
+        *   Draggable container.
+        *   **Persistence:** Timer state persists across tab switches and page reloads via server polling.
+        *   **Dismissal:** 'X' button just hides the UI; timer continues in background.
+
+4.  **Refactoring & Bug Fixes (The "14-Point" Cleanup):**
+    *   **Security:** Secured WebSocket handshake (validate token *before* accept).
+    *   **OAuth:** Enforced checking both Client ID and Client Secret before registering providers.
+    *   **Reliability:** Refined `DuplicateKeyError` logic to distinguish between email collision (fail) and username collision (retry).
+    *   **Performance:** Fixed `setInterval` logic in `clock.js` and `timer-overlay.js` to prevent duplicate polling loops.
+    *   **Accessibility:** Removed blanket `user-select: none` from Login and Onboarding pages to allow text selection where appropriate. Admin Panel text selection remains disabled by design.
+    *   **Visuals:** Fixed `slideIn` animation in timer overlay to not reset drag position.
+    *   **Cleanup:** Removed orphan HTML tags and duplicate comments.
+
+**Files Modified:**
+- `auth/router.py`, `clock_.py`, `globalchat/main.py`
+- `static/js/clock.js`, `static/js/timer-overlay.js`
+- `static/admin/style.css`, `static/css/timer-overlay.css`
+- `static/login/style.css`, `static/onboarding/style.css`
+
+---
+
 ### [2026-01-29] - Repository Sync & Conflict Resolution
 
 **Contributor:** Anzal
@@ -549,4 +599,4 @@ python -m uvicorn clock_:app --reload --host 127.0.0.1 --port 8000
 
 ---
 
-*Last Updated: 2026-01-29 by Anzal - Repository Sync & Conflict Resolution*
+*Last Updated: 2026-01-29 by Keshav/Anzal - Refactoring & Fixes*

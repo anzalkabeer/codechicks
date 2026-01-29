@@ -61,7 +61,6 @@ app.add_middleware(
 )
 
 # --- Session Middleware for OAuth ---
-# --- Session Middleware for OAuth ---
 # Required by authlib to store temporary state during redirects
 secret_key = os.getenv("SECRET_KEY")
 if not secret_key:

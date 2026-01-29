@@ -241,7 +241,7 @@ if not os.getenv('GITHUB_CLIENT_ID') or not os.getenv('GITHUB_CLIENT_SECRET'):
 
 
 # Google Configuration
-if os.getenv('GOOGLE_CLIENT_ID'):
+if os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET'):
     oauth.register(
         name='google',
         client_id=os.getenv('GOOGLE_CLIENT_ID'),
@@ -251,7 +251,7 @@ if os.getenv('GOOGLE_CLIENT_ID'):
     )
 
 # GitHub Configuration
-if os.getenv('GITHUB_CLIENT_ID'):
+if os.getenv('GITHUB_CLIENT_ID') and os.getenv('GITHUB_CLIENT_SECRET'):
     oauth.register(
         name='github',
         client_id=os.getenv('GITHUB_CLIENT_ID'),
@@ -395,7 +395,24 @@ async def auth_callback(provider: str, request: Request):
                 await new_user.insert()
                 user_doc = new_user
                 break # Success!
-            except DuplicateKeyError:
+            except DuplicateKeyError as error:
+                # Check which key caused the error (email or username)
+                # Beanie/PyMongo errors usually have details, but structure can vary.
+                # Common pattern: "E11000 duplicate key error collection: ... index: email_1 ..."
+                error_msg = str(error)
+                
+                if "email" in error_msg or "email_1" in error_msg:
+                    # Email collision -> Account already exists
+                    # Ideally we should link accounts, but for now just fail or log
+                    print(f"User with email {email} already exists (Race Condition)")
+                    # We can try to fetch the existing user if that was the case
+                    user_doc = await UserDocument.find_one(UserDocument.email == email)
+                    if user_doc:
+                         break # Treat as success (logged in)
+                    else:
+                         raise HTTPException(status_code=400, detail="Email already registered")
+
+                # If it's not email, it must be username collision -> Retry
                 if attempt == max_retries - 1:
                     print(f"Failed to generate unique username for {email}")
                     raise HTTPException(status_code=500, detail="Failed to create user account (username collision)")

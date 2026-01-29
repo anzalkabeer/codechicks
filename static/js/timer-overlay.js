@@ -54,7 +54,10 @@ function initTimerLogic() {
         if (token) headers['Authorization'] = `Bearer ${token}`;
         try {
             const res = await fetch(url, { method, headers });
-            if (res.status === 401) return null;
+            if (!res.ok) {
+                console.error(`API Error: ${res.status} ${res.statusText}`);
+                return null;
+            }
             return await res.json();
         } catch (e) { console.error(e); return null; }
     };
@@ -196,12 +199,26 @@ function initTimerLogic() {
     }
 
     // --- Close / Dismiss ---
+    let syncIntervalId = null;
+
     closeBtn.onclick = () => {
         overlay.classList.remove('active');
+        // Stop polling when hidden
+        if (syncIntervalId) {
+            clearInterval(syncIntervalId);
+            syncIntervalId = null;
+        }
     };
 
-    // Auto-init
-    syncState();
-    // Poll every 5s
-    setInterval(syncState, 5000);
+    // Initialize
+    const init = async () => {
+        await syncState();
+        // Start polling
+        if (!syncIntervalId) {
+            syncIntervalId = setInterval(syncState, 5000);
+        }
+    };
+
+    // Start logic
+    init();
 }

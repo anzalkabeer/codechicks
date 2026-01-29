@@ -37,8 +37,8 @@ Right now the admin panel just shows stats. Cool, but kinda useless. Need to bui
 
 The current polling every 5 seconds is... not great. Every time I test with friends the delay is noticeable.
 
-- [ ] Implement WebSocket connection manager
-- [ ] Replace polling with WS push
+- [x] Implement WebSocket connection manager (Partial Support - Logic added)
+- [ ] Replace polling with WS push (Frontend pending)
 - [ ] Typing indicators (who's currently typing)
 - [ ] "User X joined/left" system messages
 - [ ] Online presence — who's actually online right now
@@ -61,8 +61,8 @@ The current polling every 5 seconds is... not great. Every time I test with frie
 
 ### Timer/Stopwatch Upgrades
 
-The floating timer is cute but could do more:
-
+- [x] **Persistence Overlay** (Done!)
+  - Draggable, persists across tabs, "exact clone" UI.
 - [ ] Session tracking — log how long each session was
 - [ ] Daily/weekly timer stats on dashboard
 - [ ] Pomodoro mode (25 min work, 5 min break cycles)
@@ -142,8 +142,11 @@ Just throwing these here so I don't forget:
 
 Just so I remember what's actually done:
 
+- [x] **Frost/Cyber Theme** (Cyan Accent + Glassmorphism)
+- [x] **Persistent Timer Overlay** (Exact Clone)
+- [x] **Global Text Selection Disable** (Refined: Admin only)
 - [x] RBAC system (user/admin roles)
-- [x] Admin panel with overview stats
+- [x] Admin panel with overview stats & **Cyan Theme Update**
 - [x] Password change in settings
 - [x] Admin key upgrade flow
 - [x] Unified background across all pages

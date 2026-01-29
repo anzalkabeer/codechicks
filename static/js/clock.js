@@ -25,6 +25,8 @@ function updateDisplay() {
 const toggleBtn = document.getElementById('btn-toggle');
 
 // Sync with server on load
+let displayIntervalId = null;
+
 async function syncTimerState() {
     try {
         const response = await fetch('/api/status');
@@ -34,7 +36,14 @@ async function syncTimerState() {
 
         if (isRunning) {
             startTime = Date.now();
-            timerInterval = setInterval(updateDisplay, 100);
+            if (!displayIntervalId) {
+                displayIntervalId = setInterval(updateDisplay, 100);
+            }
+        } else {
+            if (displayIntervalId) {
+                clearInterval(displayIntervalId);
+                displayIntervalId = null;
+            }
         }
         updateDisplay();
         updateButtonState();
