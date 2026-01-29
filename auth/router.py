@@ -263,6 +263,20 @@ if os.getenv('GITHUB_CLIENT_ID') and os.getenv('GITHUB_CLIENT_SECRET'):
     )
 
 
+
+@router.get("/debug")
+async def debug_auth_config():
+    """Debug endpoint to check if env vars are loaded on Vercel."""
+    return {
+        "google_id_present": bool(os.getenv('GOOGLE_CLIENT_ID')),
+        "google_secret_present": bool(os.getenv('GOOGLE_CLIENT_SECRET')),
+        "github_id_present": bool(os.getenv('GITHUB_CLIENT_ID')),
+        "github_secret_present": bool(os.getenv('GITHUB_CLIENT_SECRET')),
+        "base_url": os.getenv("BASE_URL"),
+        "registered_clients": list(oauth._registry.keys())
+    }
+
+
 @router.get("/login/{provider}")
 async def login_via_provider(provider: str, request: Request):
     """
