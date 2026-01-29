@@ -65,7 +65,20 @@ app.include_router(chat_router)
 app.include_router(profile_router)
 app.include_router(admin_router)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+from pathlib import Path
+
+# Base directory for absolute paths
+BASE_DIR = Path(__file__).resolve().parent
+
+def serve_html(file_path: str):
+    """Helper to serve HTML files with correct path resolution"""
+    full_path = BASE_DIR / file_path
+    if not full_path.exists():
+        return HTMLResponse(content="<h1>404 - Page Not Found</h1>", status_code=404)
+    return HTMLResponse(full_path.read_text(encoding="utf-8"))
+
+# Update static mount to use absolute path
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 # -- Server-Side Timer State --
 class TimerState:
@@ -121,51 +134,44 @@ async def get_timer_status():
         elapsed_time=int(total_elapsed * 1000), 
         is_running=timer_state.is_running
     )
+
 # NOTE: /api/dashboard is now handled by routers/dashboard.py with auth protection
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    with open("static/login/login.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/login/login.html")
 
 @app.get("/clock", response_class=HTMLResponse)
 async def clock_page():
-    with open("static/clock/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/clock/index.html")
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page():
-    with open("static/login/register.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/login/register.html")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page():
     """Serve dashboard UI (mockup)"""
-    with open("static/dashboard/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/dashboard/index.html")
 
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_page():
     """Serve chat UI (mockup)"""
-    with open("static/chat/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/chat/index.html")
 
 @app.get("/onboarding", response_class=HTMLResponse)
 async def onboarding_page():
     """Serve onboarding UI (mockup)"""
-    with open("static/onboarding/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/onboarding/index.html")
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page():
     """Serve settings UI"""
-    with open("static/settings/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/settings/index.html")
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page():
     """Serve admin panel UI"""
-    with open("static/admin/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+    return serve_html("static/admin/index.html")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -5,6 +5,7 @@ Handles user registration, login, and token validation using MongoDB via Beanie.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from auth.schemas import User, UserRegister, UserLogin, Token, TokenData, AdminKeyRequest
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
-async def get_user_from_db(email: str) -> UserDocument | None:
+async def get_user_from_db(email: str) -> Optional[UserDocument]:
     """Fetch user from MongoDB by email."""
     return await UserDocument.find_one(UserDocument.email == email)
 
@@ -170,9 +171,6 @@ async def upgrade_to_admin(
         )
     if not request.admin_key or not secrets.compare_digest(request.admin_key, ADMIN_KEY):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid admin key"
-        )        raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid admin key"
         )
