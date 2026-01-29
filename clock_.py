@@ -4,6 +4,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import uvicorn
 from dotenv import load_dotenv
 
@@ -58,6 +59,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Session Middleware for OAuth ---
+# Required by authlib to store temporary state during redirects
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
 # --- Include Routers ---
 app.include_router(auth_router)

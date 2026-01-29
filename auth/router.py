@@ -15,6 +15,11 @@ from database.models import UserDocument, UserRole
 import secrets
 import re
 import random
+import os
+from starlette.requests import Request
+from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
+from fastapi.responses import RedirectResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -56,12 +61,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise credentials_exception
     
     # Convert to User schema for response
+    # Convert to User schema for response
     return User(
         email=user.email,
         disabled=user.disabled,
         username=user.username,
         display_name=user.display_name,
-        role=user.role.value  # Convert enum to string
+        role=user.role.value,  # Convert enum to string
+        has_password=bool(user.hashed_password)
     )
 
 
@@ -214,3 +221,152 @@ async def downgrade_to_user(current_user: User = Depends(get_current_user)):
     await user_doc.save()
     
     return {"message": "Successfully downgraded to user", "role": "user"}
+
+
+# ============================================================
+# OAUTH SETUP
+# ============================================================
+
+oauth = OAuth()
+
+# Google Configuration
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+# GitHub Configuration
+oauth.register(
+    name='github',
+    client_id=os.getenv('GITHUB_CLIENT_ID'),
+    client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+    authorize_url='https://github.com/login/oauth/authorize',
+    access_token_url='https://github.com/login/oauth/access_token',
+    api_base_url='https://api.github.com/',
+    client_kwargs={'scope': 'user:email'}
+)
+
+
+@router.get("/login/{provider}")
+async def login_via_provider(provider: str, request: Request):
+    """
+    Redirects user to the OAuth provider (google or github).
+    """
+    # Construct absolute redirect URI based on base URL
+    # Vercel/Prod vs Localhost
+    # Use environment variable if set (Prod), otherwise use the request's base URL (Local)
+    # This prevents localhost vs 127.0.0.1 cookie mismatch errors
+    env_base = os.getenv("BASE_URL")
+    if env_base and "localhost" not in env_base and "127.0.0.1" not in env_base:
+         base_url = env_base
+    else:
+         base_url = str(request.base_url).rstrip('/')
+         
+    redirect_uri = f"{base_url}/auth/{provider}/callback"
+    
+    return await oauth.create_client(provider).authorize_redirect(request, redirect_uri)
+
+
+@router.get("/{provider}/callback")
+async def auth_callback(provider: str, request: Request):
+    """
+    Handles the callback from the OAuth provider.
+    Exchanges code for token, gets user info, and logs them in.
+    """
+    client = oauth.create_client(provider)
+    try:
+        token = await client.authorize_access_token(request)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"OAuth Error: {str(e)}")
+
+    user_info = None
+    email = None
+    username = None
+    avatar_url = None
+    display_name = None
+
+    if provider == 'google':
+        user_info = token.get('userinfo')
+        if not user_info:
+             # Fallback if userinfo not in token (for some flows)
+             user_info = await client.userinfo(token=token)
+        
+        email = user_info.get('email')
+        display_name = user_info.get('name')
+        avatar_url = user_info.get('picture')
+        username = email.split('@')[0]
+
+    elif provider == 'github':
+        # GitHub requires separate API calls
+        resp = await client.get('user', token=token)
+        user_info = resp.json()
+        
+        # Get email (might be private)
+        email = user_info.get('email')
+        if not email:
+            resp_emails = await client.get('user/emails', token=token)
+            for e in resp_emails.json():
+                if e.get('primary') and e.get('verified'):
+                    email = e['email']
+                    break
+        
+        username = user_info.get('login')
+        display_name = user_info.get('name') or username
+        avatar_url = user_info.get('avatar_url')
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Could not retrieve email from provider")
+
+    # --- DB LOGIC ---
+    user_doc = await UserDocument.find_one(UserDocument.email == email)
+    
+    is_new_user = False
+    
+    if not user_doc:
+        # Create new user
+        is_new_user = True
+        # Ensure unique username
+        base_username = username or email.split('@')[0]
+        base_username = re.sub(r'[^a-z0-9]', '', base_username.lower())
+        final_username = base_username
+        
+        counter = 1
+        while await UserDocument.find_one(UserDocument.username == final_username):
+            final_username = f"{base_username}{counter}"
+            counter += 1
+            
+        new_user = UserDocument(
+            email=email,
+            username=final_username,
+            display_name=display_name,
+            avatar_url=avatar_url,
+            provider=provider,
+            role=UserRole.USER,
+            disabled=False,
+            hashed_password=None # Explicitly None for OAuth users
+        )
+        await new_user.insert()
+        user_doc = new_user
+    else:
+        # Update avatar/provider if missing (optional)
+        if not user_doc.avatar_url and avatar_url:
+            user_doc.avatar_url = avatar_url
+            await user_doc.save()
+
+    # Create JWT
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_doc.email}, expires_delta=access_token_expires
+    )
+    
+    # Redirect to Frontend Callback Handler matching the plan
+    # frontend_url/auth/callback?token=...&new_user=true
+    
+    redirect_url = f"/static/auth/callback.html?token={access_token}"
+    if is_new_user:
+        redirect_url += "&new_user=true"
+        
+    return RedirectResponse(url=redirect_url)

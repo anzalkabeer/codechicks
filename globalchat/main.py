@@ -16,6 +16,11 @@ from datetime import datetime
 from database.models import MessageDocument
 from beanie import PydanticObjectId
 from utils.timezone import now_ist
+from fastapi import Query
+from jose import jwt, JWTError
+from auth.utils import SECRET_KEY, ALGORITHM
+from auth.schemas import TokenData
+from database.models import UserDocument
 
 # ============================================================
 # 2. THE STORAGE LOGIC (Connection Manager)
@@ -66,10 +71,37 @@ router = APIRouter(prefix="/ws", tags=["websocket"])
 # WEBSOCKET ENDPOINT - THE MAIN CHAT ROOM
 # ============================================================
 @router.websocket("/chat")
-async def websocket_chat_endpoint(websocket: WebSocket):
+async def websocket_chat_endpoint(websocket: WebSocket, token: str = Query(None)):
     """
     Main WebSocket endpoint for the global chat room.
+    Requires 'token' query parameter for authentication.
     """
+    # 1. AUTHENTICATION (Before Accepting)
+    if not token:
+        await websocket.close(code=4003, reason="Authentication required")
+        return
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            await websocket.close(code=4003, reason="Invalid token")
+            return
+    except JWTError:
+        await websocket.close(code=4003, reason="Invalid token")
+        return
+        
+    # Get user from DB
+    user = await UserDocument.find_one(UserDocument.email == email)
+    if not user:
+        await websocket.close(code=4003, reason="User not found")
+        return
+        
+    # Validated Identity
+    current_user_email = user.email
+    current_user_name = user.display_name or user.username or user.email.split("@")[0]
+
+    # 2. CONNECTION
     await manager.connect(websocket)
     
     try:
@@ -81,9 +113,9 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                 message_data = json.loads(data)
                 action_type = message_data.get("type", "message")
                 
-                # Metadata
-                username = message_data.get("username", "Anonymous")
-                sender_id = message_data.get("sender_id", "")  # Email
+                # Metadata - FORCED from authenticated user (ignore client claims)
+                username = current_user_name
+                sender_id = current_user_email
                 
                 # --- CASE 1: NEW MESSAGE ---
                 if action_type == "message":

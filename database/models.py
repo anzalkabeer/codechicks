@@ -27,7 +27,7 @@ class UserDocument(Document):
     """
     # Auth fields
     email: Indexed(str, unique=True)
-    hashed_password: str
+    hashed_password: Optional[str] = None
     disabled: bool = False
     
     # Role-based access control
@@ -36,6 +36,7 @@ class UserDocument(Document):
     # Profile fields - sparse index allows multiple None values
     username: Optional[Indexed(str, unique=True, sparse=True)] = None
     display_name: Optional[str] = None
+    provider: str = "local"  # local, google, github
     age: Optional[int] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None

@@ -185,12 +185,19 @@ async def change_password(
             detail="User not found"
         )
     
-    # Verify current password
-    if not verify_password(data.current_password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect"
-        )
+    # Verify current password ONLY if user has one
+    if user.hashed_password:
+        if not data.current_password:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is required"
+            )
+        if not verify_password(data.current_password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect"
+            )
+    # If no hashed_password (OAuth user), we skip verification (they are setting it for the first time)
     
     # Validate new password
     if len(data.new_password) < 8:

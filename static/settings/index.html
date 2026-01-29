@@ -227,6 +227,31 @@
                 const user = await response.json();
                 currentRole = user.role;
 
+                currentRole = user.role;
+
+                // Handle Password UI
+                const currentPasswordGroup = document.getElementById('currentPassword').parentElement;
+                const passwordBtnText = document.getElementById('passwordBtnText');
+                const passwordCardTitle = document.querySelector('#passwordForm').closest('.card-body').previousElementSibling.querySelector('.card-title');
+
+                if (user.has_password === false) {
+                    // User has no password (OAuth) -> Setup Mode
+                    currentPasswordGroup.style.display = 'none';
+                    document.getElementById('currentPassword').required = false;
+                    passwordBtnText.innerHTML = '<i class="fas fa-lock"></i> Set Password';
+                    passwordCardTitle.textContent = '🔑 Set Password';
+                    // Fix alignment: Make grid 1 column so New Password is full width
+                    document.querySelector('#passwordForm .form-grid').style.gridTemplateColumns = '1fr';
+                } else {
+                    // User has password -> Change Mode
+                    currentPasswordGroup.style.display = 'block';
+                    document.getElementById('currentPassword').required = true;
+                    passwordBtnText.innerHTML = '<i class="fas fa-key"></i> Change Password';
+                    passwordCardTitle.textContent = '🔑 Change Password';
+                    // Revert to 2 columns
+                    document.querySelector('#passwordForm .form-grid').style.gridTemplateColumns = '1fr 1fr';
+                }
+
                 // Update UI based on role
                 const badge = document.getElementById('roleBadge');
                 if (user.role === 'admin') {

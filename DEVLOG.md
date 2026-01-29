@@ -20,7 +20,7 @@ This document tracks all major changes, features, and future plans for the CodeC
 
 ### [2026-01-29] - Repository Sync & Conflict Resolution
 
-**Developer:** Anzal
+**Contributor:** Anzal
 
 #### ✅ Completed
 

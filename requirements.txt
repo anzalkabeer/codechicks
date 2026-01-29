@@ -23,3 +23,8 @@ fastapi[standard]
 # Database
 beanie          # Async MongoDB ODM
 motor           # Async MongoDB driver (required by Beanie)
+
+# Oauth
+authlib
+httpx
+itsdangerous

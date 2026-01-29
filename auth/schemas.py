@@ -7,9 +7,10 @@ class User(BaseModel):
     username: Optional[str] = None
     display_name: Optional[str] = None
     role: str = "user"  # user or admin
+    has_password: bool = False  # New field to indicate if user has a password set
 
 class UserInDB(User):
-    hashed_password: str
+    hashed_password: Optional[str] = None
 
 class UserRegister(BaseModel):
     email: str
@@ -28,7 +29,7 @@ class TokenData(BaseModel):
 
 class PasswordChange(BaseModel):
     """Schema for password change request."""
-    current_password: str
+    current_password: Optional[str] = None  # Optional if setting password for the first time
     new_password: str
 
 class AdminKeyRequest(BaseModel):

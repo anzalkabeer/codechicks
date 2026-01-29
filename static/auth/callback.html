@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticating... | CodeChicks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0f172a;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-bottom-color: #ffffff;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        .message {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <span class="loader"></span>
+    <div class="message">Finalizing secure login...</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Get token from URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const error = urlParams.get('error');
+
+            if (token) {
+                // 2. Save to localStorage
+                localStorage.setItem('access_token', token);
+
+                // 3. Redirect logic
+                const isNewUser = urlParams.get('new_user') === 'true';
+                const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
+
+                // Small delay to ensure storage is committed and for UX smoothness
+                setTimeout(() => {
+                    window.location.href = redirectPath;
+                }, 800);
+            } else {
+                // Handle Error
+                const msg = document.querySelector('.message');
+                msg.style.color = '#ef4444';
+                msg.style.animation = 'none';
+                msg.textContent = error ? `Login Failed: ${error}` : 'Authentication Failed: No token received.';
+
+                // Add return button
+                const btn = document.createElement('a');
+                btn.href = '/';
+                btn.textContent = 'Return to Login';
+                btn.style.marginTop = '20px';
+                btn.style.color = '#38bdf8';
+                btn.style.textDecoration = 'none';
+                document.body.appendChild(btn);
+            }
+        });
+    </script>
+</body>
+
+</html>

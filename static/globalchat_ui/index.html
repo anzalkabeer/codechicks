@@ -231,7 +231,14 @@
 
             // Determine WebSocket URL (ws:// for localhost, wss:// for production)
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
+            // Get token from localStorage
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                console.error("No auth token found");
+                updateConnectionStatus('disconnected');
+                return;
+            }
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat?token=${token}`;
 
             console.log('Connecting to WebSocket:', wsUrl);
 
